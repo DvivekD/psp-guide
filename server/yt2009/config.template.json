@@ -2,7 +2,7 @@
     "port": 8081,
     "env": "prod",
     "ip": "YOUR_SERVER_IP",
-    "data_api_key": "YOUR_YOUTUBE_API_KEY",
+    "tokens": ["*"],
     "auto_maintain": false,
     "fallback_url": "https://www.youtube.com",
     "using_ssl": false

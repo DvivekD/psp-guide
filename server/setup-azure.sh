@@ -41,8 +41,9 @@ if [[ "$confirm" =~ ^[Nn] ]]; then
 fi
 
 echo ""
-echo -e "${YELLOW}YouTubeHQ requires a Google Cloud YouTube Data v3 API Key.${NC}"
-echo -e "You can get one for free at: https://console.cloud.google.com"
+echo -e "${YELLOW}[OPTIONAL] YouTube Data v3 API Key${NC}"
+echo -e "This improves search result dates but is NOT required."
+echo -e "Search works without it. Get one free at: https://console.cloud.google.com"
 read -p "Enter your YouTube API Key (or press Enter to skip): " YT_API_KEY
 
 # ============================================================
@@ -150,7 +151,7 @@ EOF
 if [ -f "/home/$USER/psp-guide/server/yt2009/back/config.json" ]; then
     sed -i "s/YOUR_SERVER_IP/${SERVER_IP}/g" /home/$USER/psp-guide/server/yt2009/back/config.json
     if [ -n "$YT_API_KEY" ]; then
-        sed -i "s/YOUR_YOUTUBE_API_KEY/${YT_API_KEY}/g" /home/$USER/psp-guide/server/yt2009/back/config.json
+        sed -i "s/\"using_ssl\": false/\"data_api_key\": \"${YT_API_KEY}\",\n    \"using_ssl\": false/" /home/$USER/psp-guide/server/yt2009/back/config.json
     fi
 fi
 

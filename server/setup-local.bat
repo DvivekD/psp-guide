@@ -69,10 +69,10 @@ REM ============================================================
 REM Detect Local IP
 REM ============================================================
 echo.
-echo [2/5] API Keys
+echo [2/5] [OPTIONAL] YouTube Data v3 API Key
 echo.
-echo   YouTubeHQ requires a Google Cloud YouTube Data v3 API Key.
-echo   You can get one for free at: https://console.cloud.google.com
+echo   This improves search result dates but is NOT required.
+echo   Search works without it. Get one free at: https://console.cloud.google.com
 set /p YT_API_KEY="   Enter your YouTube API Key (or press Enter to skip): "
 
 echo.
@@ -158,7 +158,7 @@ echo   - SpotiFlac started on port 8083
 if exist "%SCRIPT_DIR%yt2009\back\config.json" (
     powershell -Command "(Get-Content '%SCRIPT_DIR%yt2009\back\config.json') -replace 'YOUR_SERVER_IP', '%LOCAL_IP%' | Set-Content '%SCRIPT_DIR%yt2009\back\config.json'"
     if not "%YT_API_KEY%"=="" (
-        powershell -Command "(Get-Content '%SCRIPT_DIR%yt2009\back\config.json') -replace 'YOUR_YOUTUBE_API_KEY', '%YT_API_KEY%' | Set-Content '%SCRIPT_DIR%yt2009\back\config.json'"
+        powershell -Command "(Get-Content '%SCRIPT_DIR%yt2009\back\config.json') -replace '\"using_ssl\": false', '\"data_api_key\": \"%YT_API_KEY%\", \"using_ssl\": false' | Set-Content '%SCRIPT_DIR%yt2009\back\config.json'"
     )
     start "YouTubeHQ (Port 8081)" cmd /k "cd /d "%SCRIPT_DIR%yt2009\back" && node backend.js"
     echo   - YouTubeHQ started on port 8081
