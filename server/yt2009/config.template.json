@@ -1,0 +1,8 @@
+{
+    "port": 8081,
+    "env": "prod",
+    "ip": "YOUR_SERVER_IP",
+    "auto_maintain": false,
+    "fallback_url": "https://www.youtube.com",
+    "using_ssl": false
+}

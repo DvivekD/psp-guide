@@ -1,0 +1,14 @@
+node_modules/
+.env
+*.log
+cache/
+*.flv
+*.tmp
+*.mp3
+*.jpg
+*.png
+server/cloudmedia/resume.json
+server/yt2009/back/config.json
+server/spotiflac/config.json
+psp_voice.txt
+.DS_Store

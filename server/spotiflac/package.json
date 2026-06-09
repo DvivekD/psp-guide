@@ -1,0 +1,12 @@
+{
+  "name": "psp-spotiflac",
+  "version": "1.0.0",
+  "description": "SpotiFlac backend - Lossless music streaming for PSP",
+  "main": "server.js",
+  "scripts": { "start": "node server.js" },
+  "dependencies": {
+    "express": "^4.21.0",
+    "ytdl-core": "^4.11.5",
+    "socks-proxy-agent": "^8.0.0"
+  }
+}
