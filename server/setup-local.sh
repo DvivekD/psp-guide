@@ -96,6 +96,12 @@ fi
 # ============================================================
 # Install NPM Dependencies
 # ============================================================
+
+echo ""
+echo -e "${YELLOW}YouTubeHQ requires a Google Cloud YouTube Data v3 API Key.${NC}"
+echo -e "You can get one for free at: https://console.cloud.google.com"
+read -p "Enter your YouTube API Key (or press Enter to skip): " YT_API_KEY
+
 echo ""
 echo -e "${YELLOW}[3/6]${NC} Installing server dependencies..."
 
@@ -138,6 +144,11 @@ EOF
 if [ -f "$SCRIPT_DIR/yt2009/back/config.json" ]; then
     sed -i.bak "s/YOUR_SERVER_IP/${LOCAL_IP}/g" "$SCRIPT_DIR/yt2009/back/config.json" 2>/dev/null || \
     sed -i '' "s/YOUR_SERVER_IP/${LOCAL_IP}/g" "$SCRIPT_DIR/yt2009/back/config.json" 2>/dev/null
+    
+    if [ -n "$YT_API_KEY" ]; then
+        sed -i.bak "s/YOUR_YOUTUBE_API_KEY/${YT_API_KEY}/g" "$SCRIPT_DIR/yt2009/back/config.json" 2>/dev/null || \
+        sed -i '' "s/YOUR_YOUTUBE_API_KEY/${YT_API_KEY}/g" "$SCRIPT_DIR/yt2009/back/config.json" 2>/dev/null
+    fi
 fi
 
 echo -e "${GREEN}  → Configuration complete${NC}"

@@ -40,6 +40,11 @@ if [[ "$confirm" =~ ^[Nn] ]]; then
     read -p "Enter the correct IP: " SERVER_IP
 fi
 
+echo ""
+echo -e "${YELLOW}YouTubeHQ requires a Google Cloud YouTube Data v3 API Key.${NC}"
+echo -e "You can get one for free at: https://console.cloud.google.com"
+read -p "Enter your YouTube API Key (or press Enter to skip): " YT_API_KEY
+
 # ============================================================
 # Step 2: System Updates & Dependencies
 # ============================================================
@@ -144,6 +149,9 @@ EOF
 # Patch yt2009 config (if installed)
 if [ -f "/home/$USER/psp-guide/server/yt2009/back/config.json" ]; then
     sed -i "s/YOUR_SERVER_IP/${SERVER_IP}/g" /home/$USER/psp-guide/server/yt2009/back/config.json
+    if [ -n "$YT_API_KEY" ]; then
+        sed -i "s/YOUR_YOUTUBE_API_KEY/${YT_API_KEY}/g" /home/$USER/psp-guide/server/yt2009/back/config.json
+    fi
 fi
 
 echo -e "${GREEN}  → All configs patched with ${SERVER_IP}${NC}"

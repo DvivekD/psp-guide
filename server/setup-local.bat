@@ -68,7 +68,15 @@ echo.
 REM ============================================================
 REM Detect Local IP
 REM ============================================================
-echo [2/5] Detecting your local IP address...
+echo.
+echo [2/5] API Keys
+echo.
+echo   YouTubeHQ requires a Google Cloud YouTube Data v3 API Key.
+echo   You can get one for free at: https://console.cloud.google.com
+set /p YT_API_KEY="   Enter your YouTube API Key (or press Enter to skip): "
+
+echo.
+echo [3/5] Detecting your local IP address...
 
 for /f "tokens=2 delims=:" %%a in ('ipconfig ^| findstr /C:"IPv4 Address"') do (
     set LOCAL_IP=%%a
@@ -147,7 +155,11 @@ echo   - CloudMedia started on port 8082
 start "SpotiFlac (Port 8083)" cmd /k "cd /d "%SCRIPT_DIR%spotiflac" && node server.js"
 echo   - SpotiFlac started on port 8083
 
-if exist "%SCRIPT_DIR%yt2009\back\backend.js" (
+if exist "%SCRIPT_DIR%yt2009\back\config.json" (
+    powershell -Command "(Get-Content '%SCRIPT_DIR%yt2009\back\config.json') -replace 'YOUR_SERVER_IP', '%LOCAL_IP%' | Set-Content '%SCRIPT_DIR%yt2009\back\config.json'"
+    if not "%YT_API_KEY%"=="" (
+        powershell -Command "(Get-Content '%SCRIPT_DIR%yt2009\back\config.json') -replace 'YOUR_YOUTUBE_API_KEY', '%YT_API_KEY%' | Set-Content '%SCRIPT_DIR%yt2009\back\config.json'"
+    )
     start "YouTubeHQ (Port 8081)" cmd /k "cd /d "%SCRIPT_DIR%yt2009\back" && node backend.js"
     echo   - YouTubeHQ started on port 8081
 )
