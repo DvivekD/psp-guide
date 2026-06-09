@@ -130,15 +130,9 @@ if exist "%SCRIPT_DIR%essentials\wpa2psp.prx" (
     echo   - wpa2psp.prx installed (WPA2 Wi-Fi support)
 )
 
-if exist "%SCRIPT_DIR%essentials\noumd.prx" (
-    copy /Y "%SCRIPT_DIR%essentials\noumd.prx" "%PSP_DRIVE%\seplugins\noumd.prx" >nul
-    echo   - noumd.prx installed (Power saver)
-)
-
 REM Create/Update VSH.TXT (dashboard plugins)
 (
 echo ms0:/seplugins/wpa2psp.prx 1
-echo ms0:/seplugins/noumd.prx 1
 ) > "%PSP_DRIVE%\seplugins\VSH.TXT"
 echo   - VSH.TXT configured
 

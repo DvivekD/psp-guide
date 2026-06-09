@@ -84,10 +84,10 @@ if ! command -v warp-cli &> /dev/null; then
 fi
 
 # Register and configure WARP
-warp-cli registration new 2>/dev/null || true
-warp-cli mode proxy 2>/dev/null || true
-warp-cli proxy port 40000 2>/dev/null || true
-warp-cli connect 2>/dev/null || true
+warp-cli --accept-tos registration new 2>/dev/null || true
+warp-cli --accept-tos mode proxy 2>/dev/null || true
+warp-cli --accept-tos proxy port 40000 2>/dev/null || true
+warp-cli --accept-tos connect 2>/dev/null || true
 echo -e "${GREEN}  → WARP proxy running on socks5://127.0.0.1:40000${NC}"
 
 # ============================================================
