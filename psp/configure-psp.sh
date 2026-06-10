@@ -124,13 +124,10 @@ if [ -f "${SCRIPT_DIR}/essentials/wpa2psp.prx" ]; then
     echo -e "${GREEN}  → wpa2psp.prx installed (WPA2 Wi-Fi)${NC}"
 fi
 
-if [ -f "${SCRIPT_DIR}/essentials/noumd.prx" ]; then
-    cp "${SCRIPT_DIR}/essentials/noumd.prx" "${PSP_PATH}/seplugins/noumd.prx"
-    echo -e "${GREEN}  → noumd.prx installed (Power saver)${NC}"
-fi
+
 
 # Create plugin config files
-printf "ms0:/seplugins/wpa2psp.prx 1\nms0:/seplugins/noumd.prx 1\n" > "${PSP_PATH}/seplugins/VSH.TXT"
+printf "ms0:/seplugins/wpa2psp.prx 1\n" > "${PSP_PATH}/seplugins/VSH.TXT"
 printf "ms0:/seplugins/wpa2psp.prx 1\n" > "${PSP_PATH}/seplugins/GAME.TXT"
 echo -e "${GREEN}  → VSH.TXT and GAME.TXT configured${NC}"
 

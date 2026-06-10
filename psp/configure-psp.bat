@@ -114,7 +114,7 @@ for %%f in (YouTubeHQ.js CloudMedia.js SpotiFLAC.js) do (
 )
 
 REM ============================================================
-REM Step 4: Essential Plugins (wpa2psp, noumd)
+REM Step 4: Essential Plugins (wpa2psp)
 REM ============================================================
 echo.
 echo [4/4] Installing essential PSP plugins...
