@@ -101,7 +101,7 @@ echo.
 REM ============================================================
 REM Install NPM Dependencies
 REM ============================================================
-echo [3/5] Installing server dependencies...
+echo [4/5] Installing server dependencies...
 
 set SCRIPT_DIR=%~dp0
 
@@ -120,7 +120,7 @@ echo.
 REM ============================================================
 REM Configure
 REM ============================================================
-echo [4/5] Configuring with IP: %LOCAL_IP%...
+echo [5/5] Configuring with IP: %LOCAL_IP%...
 
 REM Create .env
 (
@@ -128,15 +128,13 @@ echo BACKEND_IP=%LOCAL_IP%
 echo GOTUBE_PORT=8082
 echo SPOTIFLAC_PORT=8083
 echo YT2009_PORT=8081
-echo PROXY_URL=socks5://127.0.0.1:40000
 ) > "%SCRIPT_DIR%.env"
 
 REM Create SpotiFlac config
 (
 echo {
 echo     "BACKEND_IP": "%LOCAL_IP%",
-echo     "PORT": 8083,
-echo     "PROXY_URL": "socks5://127.0.0.1:40000"
+echo     "PORT": 8083
 echo }
 ) > "%SCRIPT_DIR%spotiflac\config.json"
 

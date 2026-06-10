@@ -8,6 +8,8 @@ require('dotenv').config({ path: path.join(__dirname, '..', '.env') });
 
 const app = express();
 
+const pythonCmd = process.platform === 'win32' ? 'python' : 'python3';
+
 // Global socket error safety net
 app.use((req, res, next) => {
     req.on('error', () => {});
@@ -322,7 +324,7 @@ app.get('/jiosaavn_search', function(req, res) {
         if (query.startsWith('@')) { queryType = 'album'; cleanQuery = query.substring(1).trim(); }
         else if (query.startsWith('!')) { queryType = 'playlist'; cleanQuery = query.substring(1).trim(); }
 
-        var pyArgs = ['python3', path.join(__dirname, '../spotiflac/ytm_search.py'), queryType, cleanQuery];
+        var pyArgs = [pythonCmd, path.join(__dirname, '../spotiflac/ytm_search.py'), queryType, cleanQuery];
         var child = spawn(pyArgs[0], pyArgs.slice(1));
         child.on('error', () => {});
         var stdoutData = '';

@@ -131,14 +131,12 @@ BACKEND_IP=${LOCAL_IP}
 GOTUBE_PORT=8082
 SPOTIFLAC_PORT=8083
 YT2009_PORT=8081
-PROXY_URL=socks5://127.0.0.1:40000
 EOF
 
 cat > "$SCRIPT_DIR/spotiflac/config.json" << EOF
 {
     "BACKEND_IP": "${LOCAL_IP}",
-    "PORT": 8083,
-    "PROXY_URL": "socks5://127.0.0.1:40000"
+    "PORT": 8083
 }
 EOF
 
@@ -160,9 +158,12 @@ echo -e "${GREEN}  → Configuration complete${NC}"
 echo ""
 echo -e "${YELLOW}[5/6]${NC} Cloudflare WARP proxy..."
 if command -v warp-cli &> /dev/null; then
-    warp-cli mode proxy 2>/dev/null || true
-    warp-cli proxy port 40000 2>/dev/null || true
-    warp-cli connect 2>/dev/null || true
+    warp-cli --accept-tos mode proxy 2>/dev/null || true
+    warp-cli --accept-tos proxy port 40000 2>/dev/null || true
+    warp-cli --accept-tos connect 2>/dev/null || true
+    echo "PROXY_URL=socks5://127.0.0.1:40000" >> "$SCRIPT_DIR/.env"
+    sed -i.bak 's/"PORT": 8083/"PORT": 8083,\n    "PROXY_URL": "socks5:\/\/127.0.0.1:40000"/g' "$SCRIPT_DIR/spotiflac/config.json" 2>/dev/null || \
+    sed -i '' 's/"PORT": 8083/"PORT": 8083,\n    "PROXY_URL": "socks5:\/\/127.0.0.1:40000"/g' "$SCRIPT_DIR/spotiflac/config.json" 2>/dev/null
     echo -e "${GREEN}  → WARP proxy active on port 40000${NC}"
 else
     echo -e "${YELLOW}  → WARP not installed. YouTube streams may be blocked.${NC}"

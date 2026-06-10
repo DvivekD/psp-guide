@@ -2,9 +2,12 @@ const express = require('express');
 const { spawn, exec } = require('child_process');
 const fs = require('fs');
 const path = require('path');
+const os = require('os');
 const ytdl = require('ytdl-core');
 const { SocksProxyAgent } = require('socks-proxy-agent');
 const app = express();
+
+const pythonCmd = process.platform === 'win32' ? 'python' : 'python3';
 
 const configPath = path.join(__dirname, 'config.json');
 let config = { BACKEND_IP: '127.0.0.1', PORT: 8083, PROXY_URL: 'socks5://127.0.0.1:40000' };
@@ -81,7 +84,7 @@ async function handleSearch(query, page, res) {
         
         console.log(`[SEARCH] Query Type: ${queryType} | Query: ${cleanQuery}`);
         
-        const pyArgs = ['python3', path.join(__dirname, 'ytm_search.py'), queryType, cleanQuery];
+        const pyArgs = [pythonCmd, path.join(__dirname, 'ytm_search.py'), queryType, cleanQuery];
         const child = spawn(pyArgs[0], pyArgs.slice(1));
         
         let stdoutData = '';
@@ -119,7 +122,7 @@ app.get('/search', async (req, res) => {
 });
 
 app.get('/voice-search', (req, res) => {
-    const voiceFilePath = '/tmp/psp_voice.txt';
+    const voiceFilePath = path.join(os.tmpdir(), 'psp_voice.txt');
     if (fs.existsSync(voiceFilePath)) {
         const query = fs.readFileSync(voiceFilePath, 'utf8').trim();
         fs.unlinkSync(voiceFilePath); // Clear the command after reading
@@ -137,7 +140,7 @@ app.get('/voice-search', (req, res) => {
 
 // Raw text endpoint for CloudMedia and YouTubeHQ
 app.get('/get-voice', (req, res) => {
-    const voiceFilePath = '/tmp/psp_voice.txt';
+    const voiceFilePath = path.join(os.tmpdir(), 'psp_voice.txt');
     if (fs.existsSync(voiceFilePath)) {
         const query = fs.readFileSync(voiceFilePath, 'utf8').trim();
         fs.unlinkSync(voiceFilePath);
@@ -156,7 +159,7 @@ app.get('/speak', (req, res) => {
     }
     
     // Save to tmp file
-    fs.writeFileSync('/tmp/psp_voice.txt', query.trim(), 'utf8');
+    fs.writeFileSync(path.join(os.tmpdir(), 'psp_voice.txt'), query.trim(), 'utf8');
     console.log(`[VOICE-BRIDGE] Saved voice query: "${query}"`);
     
     // Return a simple success page or text
@@ -210,7 +213,7 @@ app.get('/stream', async (req, res) => {
 
         // 2. Resolve thumbnail
         let thumbUrl = thumbUrlFromSearch;
-        let thumbPath = `/tmp/sc_thumb_${safeId}.jpg`;
+        let thumbPath = path.join(os.tmpdir(), `sc_thumb_${safeId}.jpg`);
         let videoId = url.split('v=')[1];
         if (videoId) {
             videoId = videoId.replace(/[^a-zA-Z0-9-_]/g, '').substring(0, 11);
@@ -230,27 +233,27 @@ app.get('/stream', async (req, res) => {
         thumbUrl = thumbUrlFromSearch || (videoId ? `https://i.ytimg.com/vi/${videoId}/maxresdefault.jpg` : null);
         
         if (thumbUrl) {
-            await new Promise(resolve => exec(`curl -sL --fail -o ${thumbPath} "${thumbUrl}"`, resolve));
+            await new Promise(resolve => spawn('curl', ['-sL', '--fail', '-o', thumbPath, thumbUrl]).on('close', resolve));
         }
         
         if (!fs.existsSync(thumbPath) || fs.statSync(thumbPath).size < 100) {
             if (videoId) {
                 thumbUrl = `https://i.ytimg.com/vi/${videoId}/maxresdefault.jpg`;
-                await new Promise(resolve => exec(`curl -sL --fail -o ${thumbPath} "${thumbUrl}"`, resolve));
+                await new Promise(resolve => spawn('curl', ['-sL', '--fail', '-o', thumbPath, thumbUrl]).on('close', resolve));
             }
         }
 
         if (!fs.existsSync(thumbPath) || fs.statSync(thumbPath).size < 100) {
             if (videoId) {
                 thumbUrl = `https://i.ytimg.com/vi/${videoId}/hqdefault.jpg`;
-                await new Promise(resolve => exec(`curl -sL --fail -o ${thumbPath} "${thumbUrl}"`, resolve));
+                await new Promise(resolve => spawn('curl', ['-sL', '--fail', '-o', thumbPath, thumbUrl]).on('close', resolve));
             }
         }
 
         // 3. Composite premium vinyl assets (happens simultaneously with yt-dlp startup)
         const vinylPath = path.join(__dirname, '../assets/vinyl.png');
         const globalBgPath = path.join(__dirname, '../assets/bg.png');
-        const discPath = `/tmp/disc_${safeId}.png`;
+        const discPath = path.join(os.tmpdir(), `disc_${safeId}.png`);
         
         let hasIm = false;
         if (fs.existsSync(vinylPath) && fs.existsSync(thumbPath) && fs.statSync(thumbPath).size > 100) {
