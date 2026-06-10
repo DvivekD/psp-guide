@@ -78,7 +78,7 @@ set /p YT_API_KEY="   Enter your YouTube API Key (or press Enter to skip): "
 echo.
 echo [3/5] Detecting your local IP address...
 
-for /f "tokens=2 delims=:" %%a in ('ipconfig ^| findstr /C:"IPv4 Address"') do (
+for /f "tokens=2 delims=:" %%a in ('ipconfig ^| findstr "IPv4"') do (
     set LOCAL_IP=%%a
     goto :found_ip
 )
