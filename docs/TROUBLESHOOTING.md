@@ -31,3 +31,18 @@ This usually happens if the server returns an error instead of a video file.
 
 ### I entered the wrong IP during setup
 Simply run the `configure-psp.bat` (or `.sh`) script again and enter the correct IP. It will overwrite the old configuration automatically.
+
+### GoTube crashes instantly on ARK-5 (returns to XMB)
+If you're running **ARK-5** custom firmware and GoTube immediately kicks you back to the XMB without ever loading, the `wpa2psp.prx` plugin is conflicting with ARK-5's **built-in WPA2 support**.
+
+ARK-5 already hooks the PSP's network kernel functions for WPA2. The `wpa2psp.prx` plugin tries to hook the same functions, causing a kernel conflict that crashes GoTube on launch.
+
+**Fix:**
+1. Connect your PSP via USB
+2. Delete these two files from your memory stick:
+   - `ms0:/seplugins/GAME.TXT`
+   - `ms0:/seplugins/VSH.TXT`
+3. Optionally delete `ms0:/seplugins/wpa2psp.prx` (it's not needed on ARK-5)
+4. Reboot your PSP and try GoTube again
+
+> **Note:** If you re-run the `configure-psp` script, answer **Y** when it asks if you're using ARK-5 to skip the plugin automatically.

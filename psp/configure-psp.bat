@@ -117,7 +117,20 @@ REM ============================================================
 REM Step 4: Essential Plugins (wpa2psp)
 REM ============================================================
 echo.
-echo [4/4] Installing essential PSP plugins...
+echo [4/4] Wi-Fi Plugin Setup
+echo.
+echo   Are you using ARK-5 custom firmware?
+echo   ARK-5 has built-in WPA2 support, so the wpa2psp plugin
+echo   is NOT needed and may cause GoTube to crash on launch.
+echo.
+set /p CFW_CHOICE="   Using ARK-5? (y/N): "
+if /i "%CFW_CHOICE%"=="y" (
+    echo.
+    echo   Skipping wpa2psp.prx (not needed on ARK-5)
+    goto :skip_plugins
+)
+
+echo   Installing wpa2psp.prx for WPA2 Wi-Fi support...
 
 REM Create seplugins directory
 if not exist "%PSP_DRIVE%\seplugins\" (
@@ -141,6 +154,8 @@ REM Create/Update GAME.TXT (in-game plugins)
 echo ms0:/seplugins/wpa2psp.prx 1
 ) > "%PSP_DRIVE%\seplugins\GAME.TXT"
 echo   - GAME.TXT configured
+
+:skip_plugins
 
 REM ============================================================
 REM Done!

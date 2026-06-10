@@ -113,23 +113,32 @@ for plugin in YouTubeHQ.js CloudMedia.js SpotiFLAC.js; do
 done
 
 # ============================================================
-# Step 4: Essential Plugins
+# Step 4: Wi-Fi Plugin Setup
 # ============================================================
 echo ""
-echo -e "${YELLOW}[4/4]${NC} Installing essential PSP plugins..."
+echo -e "${YELLOW}[4/4]${NC} Wi-Fi Plugin Setup"
+echo ""
+echo "  Are you using ARK-5 custom firmware?"
+echo "  ARK-5 has built-in WPA2 support, so the wpa2psp plugin"
+echo "  is NOT needed and may cause GoTube to crash on launch."
+echo ""
+read -p "  Using ARK-5? (y/N): " ARK_CHOICE
 
-# Copy PRX files
-if [ -f "${SCRIPT_DIR}/essentials/wpa2psp.prx" ]; then
-    cp "${SCRIPT_DIR}/essentials/wpa2psp.prx" "${PSP_PATH}/seplugins/wpa2psp.prx"
-    echo -e "${GREEN}  → wpa2psp.prx installed (WPA2 Wi-Fi)${NC}"
+if [[ "$ARK_CHOICE" =~ ^[Yy]$ ]]; then
+    echo ""
+    echo -e "${GREEN}  → Skipping wpa2psp.prx (not needed on ARK-5)${NC}"
+else
+    # Copy PRX files
+    if [ -f "${SCRIPT_DIR}/essentials/wpa2psp.prx" ]; then
+        cp "${SCRIPT_DIR}/essentials/wpa2psp.prx" "${PSP_PATH}/seplugins/wpa2psp.prx"
+        echo -e "${GREEN}  → wpa2psp.prx installed (WPA2 Wi-Fi)${NC}"
+    fi
+
+    # Create plugin config files
+    printf "ms0:/seplugins/wpa2psp.prx 1\n" > "${PSP_PATH}/seplugins/VSH.TXT"
+    printf "ms0:/seplugins/wpa2psp.prx 1\n" > "${PSP_PATH}/seplugins/GAME.TXT"
+    echo -e "${GREEN}  → VSH.TXT and GAME.TXT configured${NC}"
 fi
-
-
-
-# Create plugin config files
-printf "ms0:/seplugins/wpa2psp.prx 1\n" > "${PSP_PATH}/seplugins/VSH.TXT"
-printf "ms0:/seplugins/wpa2psp.prx 1\n" > "${PSP_PATH}/seplugins/GAME.TXT"
-echo -e "${GREEN}  → VSH.TXT and GAME.TXT configured${NC}"
 
 # ============================================================
 # Done!
