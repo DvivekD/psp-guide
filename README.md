@@ -40,6 +40,22 @@ A: No. We are simply copying homebrew applications and text files to your memory
 **Q: The video buffers a lot, what can I do?**
 A: See our [Troubleshooting Guide](docs/TROUBLESHOOTING.md) for tips on optimizing your Wi-Fi and server connection.
 
+**Q: How do I uninstall everything from my PSP?**
+A: We include an uninstall script that cleanly removes all files. See the Uninstall section below.
+
+## Uninstall / Rollback
+
+Want to completely remove GoTube and revert your PSP to its original state? We've got you covered.
+
+1. Connect your PSP to your computer via USB.
+2. Open the `psp` folder in this project.
+3. **Windows:** Double-click `uninstall-psp.bat`.
+   **Mac/Linux:** Open terminal and run `bash uninstall-psp.sh`.
+4. Type `YES` to confirm.
+5. The script will remove GoTube, the WPA2 plugin, and all related config files.
+
+Your PSP will be exactly as it was before you ran the setup — no traces left behind.
+
 ## License
 
 This project is licensed under the MIT License - see the [LICENSE](LICENSE) file for details.
