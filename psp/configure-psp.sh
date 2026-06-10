@@ -87,26 +87,34 @@ echo ""
 echo -e "${YELLOW}[3/4]${NC} Installing files to PSP..."
 
 # Create directories
-mkdir -p "${PSP_PATH}/PSP/GAME/GoTube/psp_plugins"
+mkdir -p "${PSP_PATH}/PSP/GAME/GoTube/site"
 mkdir -p "${PSP_PATH}/seplugins"
 
-# Copy GoTube
+# Copy entire GoTube engine (EBOOT, GT, PRX modules, site.js, etc.)
 if [ -f "${SCRIPT_DIR}/GoTube/EBOOT.PBP" ]; then
-    cp "${SCRIPT_DIR}/GoTube/EBOOT.PBP" "${PSP_PATH}/PSP/GAME/GoTube/EBOOT.PBP"
-    echo -e "${GREEN}  → GoTube app installed${NC}"
+    cp -R "${SCRIPT_DIR}/GoTube/"* "${PSP_PATH}/PSP/GAME/GoTube/"
+    echo -e "${GREEN}  → GoTube engine installed${NC}"
 else
-    echo -e "${RED}  WARNING: EBOOT.PBP not found!${NC}"
+    echo -e "${RED}  WARNING: GoTube engine files not found!${NC}"
 fi
 
-# Copy and patch plugins
+# Replace placeholder IP in cfg.js
+if [[ "$OSTYPE" == "darwin"* ]]; then
+    sed -i '' "s/YOUR_SERVER_IP/${SERVER_IP}/g" "${PSP_PATH}/PSP/GAME/GoTube/cfg.js"
+else
+    sed -i "s/YOUR_SERVER_IP/${SERVER_IP}/g" "${PSP_PATH}/PSP/GAME/GoTube/cfg.js"
+fi
+echo -e "${GREEN}  → cfg.js configured with IP: ${SERVER_IP}${NC}"
+
+# Copy and patch plugins into site/ folder
 for plugin in YouTubeHQ.js CloudMedia.js SpotiFLAC.js; do
     if [ -f "${SCRIPT_DIR}/plugins/${plugin}" ]; then
-        cp "${SCRIPT_DIR}/plugins/${plugin}" "${PSP_PATH}/PSP/GAME/GoTube/psp_plugins/${plugin}"
+        cp "${SCRIPT_DIR}/plugins/${plugin}" "${PSP_PATH}/PSP/GAME/GoTube/site/${plugin}"
         # Replace YOUR_SERVER_IP with actual IP
         if [[ "$OSTYPE" == "darwin"* ]]; then
-            sed -i '' "s/YOUR_SERVER_IP/${SERVER_IP}/g" "${PSP_PATH}/PSP/GAME/GoTube/psp_plugins/${plugin}"
+            sed -i '' "s/YOUR_SERVER_IP/${SERVER_IP}/g" "${PSP_PATH}/PSP/GAME/GoTube/site/${plugin}"
         else
-            sed -i "s/YOUR_SERVER_IP/${SERVER_IP}/g" "${PSP_PATH}/PSP/GAME/GoTube/psp_plugins/${plugin}"
+            sed -i "s/YOUR_SERVER_IP/${SERVER_IP}/g" "${PSP_PATH}/PSP/GAME/GoTube/site/${plugin}"
         fi
         echo -e "${GREEN}  → ${plugin} installed and configured${NC}"
     fi

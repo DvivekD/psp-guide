@@ -90,25 +90,25 @@ if not exist "%PSP_DRIVE%\PSP\GAME\GoTube\" (
     mkdir "%PSP_DRIVE%\PSP\GAME\GoTube"
 )
 
-REM Copy GoTube EBOOT.PBP
-if exist "%SCRIPT_DIR%GoTube\EBOOT.PBP" (
-    copy /Y "%SCRIPT_DIR%GoTube\EBOOT.PBP" "%PSP_DRIVE%\PSP\GAME\GoTube\EBOOT.PBP" >nul
-    echo   - GoTube app installed
-) else (
-    echo   WARNING: EBOOT.PBP not found in GoTube folder!
+REM Copy entire GoTube engine (EBOOT, GT, PRX modules, site.js, etc.)
+xcopy /S /Y /Q "%SCRIPT_DIR%GoTube\*" "%PSP_DRIVE%\PSP\GAME\GoTube\" >nul
+echo   - GoTube engine installed
+
+REM Replace placeholder IP in cfg.js
+powershell -Command "(Get-Content '%PSP_DRIVE%\PSP\GAME\GoTube\cfg.js') -replace 'YOUR_SERVER_IP', '%SERVER_IP%' | Set-Content '%PSP_DRIVE%\PSP\GAME\GoTube\cfg.js'" >nul 2>&1
+echo   - cfg.js configured with IP: %SERVER_IP%
+
+REM Create site plugins directory
+if not exist "%PSP_DRIVE%\PSP\GAME\GoTube\site\" (
+    mkdir "%PSP_DRIVE%\PSP\GAME\GoTube\site"
 )
 
-REM Create plugins directory
-if not exist "%PSP_DRIVE%\PSP\GAME\GoTube\psp_plugins\" (
-    mkdir "%PSP_DRIVE%\PSP\GAME\GoTube\psp_plugins"
-)
-
-REM Copy plugins and replace IP
+REM Copy plugins to site/ folder and replace IP
 for %%f in (YouTubeHQ.js CloudMedia.js SpotiFLAC.js) do (
     if exist "%SCRIPT_DIR%plugins\%%f" (
-        copy /Y "%SCRIPT_DIR%plugins\%%f" "%PSP_DRIVE%\PSP\GAME\GoTube\psp_plugins\%%f" >nul
+        copy /Y "%SCRIPT_DIR%plugins\%%f" "%PSP_DRIVE%\PSP\GAME\GoTube\site\%%f" >nul
         REM Replace YOUR_SERVER_IP with actual IP using PowerShell
-        powershell -Command "(Get-Content '%PSP_DRIVE%\PSP\GAME\GoTube\psp_plugins\%%f') -replace 'YOUR_SERVER_IP', '%SERVER_IP%' | Set-Content '%PSP_DRIVE%\PSP\GAME\GoTube\psp_plugins\%%f'" >nul 2>&1
+        powershell -Command "(Get-Content '%PSP_DRIVE%\PSP\GAME\GoTube\site\%%f') -replace 'YOUR_SERVER_IP', '%SERVER_IP%' | Set-Content '%PSP_DRIVE%\PSP\GAME\GoTube\site\%%f'" >nul 2>&1
         echo   - %%f installed and configured
     )
 )
