@@ -32,6 +32,12 @@ This usually happens if the server returns an error instead of a video file.
 ### I entered the wrong IP during setup
 Simply run the `configure-psp.bat` (or `.sh`) script again and enter the correct IP. It will overwrite the old configuration automatically.
 
+### My PSP battery drains very quickly while streaming
+Streaming video constantly uses the PSP's Wi-Fi radio and CPU to decode the footage, which naturally uses a lot of power. However, there are a few things to keep in mind:
+1. **WLAN Power Save:** Go to **Settings** -> **Power Save Settings** on your PSP and ensure **WLAN Power Save** is turned **On**. This allows the Wi-Fi chip to sleep slightly between packet bursts.
+2. **Screen Brightness:** Turn down your screen brightness (the button next to the volume controls). The highest brightness setting is the biggest battery killer.
+3. **Old Batteries:** Original PSP batteries are over 15 years old and hold a fraction of their original charge. If your battery dies in under an hour, you likely need a high-quality replacement battery (like a Cameron Sino brand battery).
+
 ### GoTube crashes instantly on ARK-5 (returns to XMB)
 If you're running **ARK-5** custom firmware and GoTube immediately kicks you back to the XMB without ever loading, the `wpa2psp.prx` plugin is conflicting with ARK-5's **built-in WPA2 support**.
 
