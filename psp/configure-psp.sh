@@ -90,6 +90,11 @@ echo -e "${YELLOW}[3/4]${NC} Installing files to PSP..."
 mkdir -p "${PSP_PATH}/PSP/GAME/GoTube/site"
 mkdir -p "${PSP_PATH}/seplugins"
 
+# Cleanup broken legacy installations (removes the useless psp_plugins folder from old script)
+if [ -d "${PSP_PATH}/PSP/GAME/GoTube/psp_plugins" ]; then
+    rm -rf "${PSP_PATH}/PSP/GAME/GoTube/psp_plugins"
+fi
+
 # Copy entire GoTube engine (EBOOT, GT, PRX modules, site.js, etc.)
 if [ -f "${SCRIPT_DIR}/GoTube/EBOOT.PBP" ]; then
     cp -R "${SCRIPT_DIR}/GoTube/"* "${PSP_PATH}/PSP/GAME/GoTube/"

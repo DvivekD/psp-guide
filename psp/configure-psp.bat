@@ -90,6 +90,11 @@ if not exist "%PSP_DRIVE%\PSP\GAME\GoTube\" (
     mkdir "%PSP_DRIVE%\PSP\GAME\GoTube"
 )
 
+REM Cleanup broken legacy installations (removes the useless psp_plugins folder from old script)
+if exist "%PSP_DRIVE%\PSP\GAME\GoTube\psp_plugins\" (
+    rmdir /S /Q "%PSP_DRIVE%\PSP\GAME\GoTube\psp_plugins"
+)
+
 REM Copy entire GoTube engine (EBOOT, GT, PRX modules, site.js, etc.)
 xcopy /S /Y /Q "%SCRIPT_DIR%GoTube\*" "%PSP_DRIVE%\PSP\GAME\GoTube\" >nul
 echo   - GoTube engine installed
