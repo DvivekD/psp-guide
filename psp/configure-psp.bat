@@ -114,19 +114,26 @@ for %%f in (YouTubeHQ.js CloudMedia.js SpotiFLAC.js) do (
 )
 
 REM ============================================================
-REM Step 4: Essential Plugins (wpa2psp)
+REM Step 4: Wi-Fi Plugin (wpa2psp)
+REM   Tested and verified on 6.60 PRO-C Infinity
 REM ============================================================
 echo.
 echo [4/4] Wi-Fi Plugin Setup
 echo.
-echo   Are you using ARK-5 custom firmware?
-echo   ARK-5 has built-in WPA2 support, so the wpa2psp plugin
-echo   is NOT needed and may cause GoTube to crash on launch.
+echo   The wpa2psp plugin adds WPA2 Wi-Fi support to your PSP.
+echo   However, some custom firmwares (like ARK-5) already have
+echo   built-in WPA2 support. Installing wpa2psp on top of these
+echo   can cause GoTube to crash on launch.
 echo.
-set /p CFW_CHOICE="   Using ARK-5? (y/N): "
-if /i "%CFW_CHOICE%"=="y" (
+echo   Skip this if:
+echo     - You are using ARK-5 (has native WPA2)
+echo     - Your CFW already supports WPA2
+echo     - Your PSP can already connect to Wi-Fi without issues
+echo.
+set /p SKIP_WPA2="   Skip wpa2psp plugin? (y/N): "
+if /i "%SKIP_WPA2%"=="y" (
     echo.
-    echo   Skipping wpa2psp.prx (not needed on ARK-5)
+    echo   Skipping wpa2psp.prx (Wi-Fi already working)
     goto :skip_plugins
 )
 

@@ -113,20 +113,27 @@ for plugin in YouTubeHQ.js CloudMedia.js SpotiFLAC.js; do
 done
 
 # ============================================================
-# Step 4: Wi-Fi Plugin Setup
+# Step 4: Wi-Fi Plugin (wpa2psp)
+#   Tested and verified on 6.60 PRO-C Infinity
 # ============================================================
 echo ""
 echo -e "${YELLOW}[4/4]${NC} Wi-Fi Plugin Setup"
 echo ""
-echo "  Are you using ARK-5 custom firmware?"
-echo "  ARK-5 has built-in WPA2 support, so the wpa2psp plugin"
-echo "  is NOT needed and may cause GoTube to crash on launch."
+echo "  The wpa2psp plugin adds WPA2 Wi-Fi support to your PSP."
+echo "  However, some custom firmwares (like ARK-5) already have"
+echo "  built-in WPA2 support. Installing wpa2psp on top of these"
+echo "  can cause GoTube to crash on launch."
 echo ""
-read -p "  Using ARK-5? (y/N): " ARK_CHOICE
+echo "  Skip this if:"
+echo "    - You are using ARK-5 (has native WPA2)"
+echo "    - Your CFW already supports WPA2"
+echo "    - Your PSP can already connect to Wi-Fi without issues"
+echo ""
+read -p "  Skip wpa2psp plugin? (y/N): " SKIP_WPA2
 
-if [[ "$ARK_CHOICE" =~ ^[Yy]$ ]]; then
+if [[ "$SKIP_WPA2" =~ ^[Yy]$ ]]; then
     echo ""
-    echo -e "${GREEN}  → Skipping wpa2psp.prx (not needed on ARK-5)${NC}"
+    echo -e "${GREEN}  → Skipping wpa2psp.prx (Wi-Fi already working)${NC}"
 else
     # Copy PRX files
     if [ -f "${SCRIPT_DIR}/essentials/wpa2psp.prx" ]; then
