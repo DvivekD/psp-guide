@@ -8,9 +8,13 @@ Don't worry, installing CFW in 2024 is incredibly easy, safe, and takes about 2 
 1. Turn on your PSP.
 2. Go to **Settings** -> **System Settings** -> **System Information**.
 3. Look at your **System Software** version. 
-4. If it says `6.61 PRO-C` or `6.61 ME` or `infinity`, you already have CFW and can skip this entire guide!
+4. If it says `6.61 PRO-C`, `6.60 PRO-C`, `6.61 ME`, or `infinity`, you already have CFW and can skip this entire guide!
+   *(Note: This toolkit has been thoroughly **tested and verified on 6.60 PRO-C Infinity**).*
 5. If it says `6.61` without any letters, proceed to Step 2.
 6. If it is lower than `6.61` (e.g. `6.60`), you should update to the official 6.61 firmware first using the Network Update feature or via a USB drive.
+
+> **Using ARK-5 or a modern CFW?**
+> Some modern firmwares like ARK-5 have **built-in WPA2 Wi-Fi support**. If your PSP can already connect to your WPA2 Wi-Fi network, you can safely **skip the Wi-Fi plugin (wpa2psp.prx)** during the `configure-psp` setup script, as installing it on top of native WPA2 can cause crashes.
 
 ## Step 2: Download PRO-C CFW
 1. Download the `6.61 PRO-C2` custom firmware files online (search for "PSP 6.61 PRO-C2 download" on Google or Wololo.net).

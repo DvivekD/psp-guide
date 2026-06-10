@@ -16,6 +16,8 @@ This plugin modifies the PSP's network stack to understand **WPA2** networks!
 - Your router must use **WPA2 Personal** encryption (WPA3 will still fail).
 - Your network password cannot contain special characters (letters and numbers only).
 
+> **Important note for ARK-5 users:** If you are running ARK-5 (or any other modern CFW with built-in WPA2 support), your PSP can connect to WPA2 networks natively! **Do not install this plugin**, as it will conflict with your firmware and crash GoTube. If you can already connect to Wi-Fi successfully, say "yes" to skipping the plugin during the setup scripts.
+
 **How to connect:**
 1. Even with the plugin, your PSP will **not** see your WPA2 network when you click "Scan".
 2. Go to **Network Settings** -> **Infrastructure Mode** -> **New Connection**.

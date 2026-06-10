@@ -13,7 +13,7 @@ This is a one-click automated setup designed specifically for beginners. You can
 
 ## Requirements
 
-1. A **PSP** with Custom Firmware (CFW) installed. (See [CFW Guide](docs/CFW_GUIDE.md) if you are on official firmware).
+1. A **PSP** with Custom Firmware (CFW) installed. *(Tested and verified on 6.60 PRO-C Infinity)*. (See [CFW Guide](docs/CFW_GUIDE.md) if you are on official firmware).
 2. A **WPA Wi-Fi** connection or a Mobile Hotspot. (See [Wi-Fi Guide](docs/WIFI_GUIDE.md) if you are having connection issues).
 3. A **PC** (Windows, Mac, or Linux) to run the setup scripts.
 
