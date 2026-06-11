@@ -376,7 +376,8 @@ app.get('/jiosaavn_stream', async function(req, res) {
 
     try {
         var yt_url = 'https://music.youtube.com/watch?v=' + id;
-        var ytdlpArgs = ['--proxy', PROXY_URL, '-q', '--no-warnings', '-f', 'bestaudio/best', '-o', '-', yt_url];
+        var ytdlpArgs = ['-q', '--no-warnings', '-f', 'bestaudio/best', '-o', '-', yt_url];
+        if (process.env.PROXY_URL) ytdlpArgs.unshift('--proxy', process.env.PROXY_URL);
         var yt_proc = spawn('yt-dlp', ytdlpArgs);
         yt_proc.on('error', () => {});
         var ffmpegArgs = ['-y', '-f', 'lavfi', '-i', 'color=c=black:s=480x272:r=1', '-i', 'pipe:0', '-map', '0:v:0', '-map', '1:a:0', '-c:v', 'flv1', '-b:v', '50k', '-s', '480x272', '-r', '1', '-c:a', 'libmp3lame', '-ar', '44100', '-ac', '2', '-ab', '320k', '-shortest', outputFile];
