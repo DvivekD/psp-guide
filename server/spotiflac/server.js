@@ -15,7 +15,10 @@ if (fs.existsSync(configPath)) {
     config = JSON.parse(fs.readFileSync(configPath, 'utf8'));
 }
 const port = config.PORT;
-const proxyAgent = new SocksProxyAgent(config.PROXY_URL);
+let proxyAgent = null;
+if (config.PROXY_URL) {
+    proxyAgent = new SocksProxyAgent(config.PROXY_URL);
+}
 
 const activeTranscodes = new Set();
 const cacheDir = path.join(__dirname, 'cache');
@@ -228,7 +231,8 @@ app.get('/stream', async (req, res) => {
         
         if (!thumbUrlFromSearch && videoId) {
             try {
-                const info = await ytdl.getInfo(videoId, { requestOptions: { agent: proxyAgent } });
+                const requestOptions = proxyAgent ? { agent: proxyAgent } : {};
+                const info = await ytdl.getInfo(videoId, { requestOptions });
                 const thumbnails = info.videoDetails.thumbnails;
                 if (thumbnails && thumbnails.length > 0) {
                     thumbUrlFromSearch = thumbnails[thumbnails.length - 1].url.split('?')[0];
@@ -273,14 +277,16 @@ app.get('/stream', async (req, res) => {
             }
         }
 
-        // 4. Spawn yt-dlp to download the audio stream via proxy
+        // 4. Spawn yt-dlp to download the audio stream (conditionally via proxy)
         const ytdlpArgs = [
-            '--proxy', config.PROXY_URL,
             '-q', '--no-warnings',
             '-f', 'bestaudio', 
             '-o', '-',
             url
         ];
+        if (config.PROXY_URL) {
+            ytdlpArgs.unshift('--proxy', config.PROXY_URL);
+        }
         const yt_proc = spawn('yt-dlp', ytdlpArgs);
         yt_proc.on('error', (err) => console.log('[YTDLP Error]', err));
 
