@@ -37,9 +37,9 @@ if [[ "$OSTYPE" == "darwin"* ]]; then
     done
 fi
 
-# Linux: Check /media/$USER/ and /mnt/
+# Linux: Check /run/media/$USER/, /media/$USER/ and /mnt/
 if [ -z "$PSP_PATH" ]; then
-    for mnt in /media/$USER/*/ /mnt/*/; do
+    for mnt in /run/media/$USER/*/ /media/$USER/*/ /mnt/*/; do
         if [ -d "${mnt}PSP/GAME" ] || [ -d "${mnt}PSP" ]; then
             PSP_PATH="${mnt}"
             break
@@ -82,9 +82,24 @@ echo -e "${GREEN}  → Using server: ${BOLD}${SERVER_IP}${NC}"
 echo ""
 
 # ============================================================
-# Step 3: Copy Files
+# Step 3: PSP Go Detection
 # ============================================================
-echo -e "${YELLOW}[3/4]${NC} Installing files to PSP..."
+PSP_DRIVE_PREFIX="ms0"
+echo -e "${YELLOW}[3/5]${NC} PSP Model Check"
+echo ""
+read -p "  Are you installing to a PSP Go internal storage (ef0:/)? (y/N): " IS_PSP_GO
+if [[ "$IS_PSP_GO" =~ ^[Yy]$ ]]; then
+    PSP_DRIVE_PREFIX="ef0"
+    echo -e "${GREEN}  → Configured for PSP Go Internal Storage (ef0:/)${NC}"
+else
+    echo -e "${GREEN}  → Configured for standard Memory Stick (ms0:/)${NC}"
+fi
+echo ""
+
+# ============================================================
+# Step 4: Copy Files
+# ============================================================
+echo -e "${YELLOW}[4/5]${NC} Installing files to PSP..."
 
 # Create directories
 mkdir -p "${PSP_PATH}/PSP/GAME/GoTube/site"
@@ -126,11 +141,11 @@ for plugin in YouTubeHQ.js CloudMedia.js SpotiFLAC.js; do
 done
 
 # ============================================================
-# Step 4: Wi-Fi Plugin (wpa2psp)
+# Step 5: Wi-Fi Plugin (wpa2psp)
 #   Tested and verified on 6.60 PRO-C Infinity
 # ============================================================
 echo ""
-echo -e "${YELLOW}[4/4]${NC} Wi-Fi Plugin Setup"
+echo -e "${YELLOW}[5/5]${NC} Wi-Fi Plugin Setup"
 echo ""
 echo "  The wpa2psp plugin adds WPA2 Wi-Fi support to your PSP."
 echo "  However, some custom firmwares (like ARK-5) already have"
@@ -154,10 +169,10 @@ else
         echo -e "${GREEN}  → wpa2psp.prx installed (WPA2 Wi-Fi)${NC}"
     fi
 
-    # Create plugin config files
-    printf "ms0:/seplugins/wpa2psp.prx 1\n" > "${PSP_PATH}/seplugins/VSH.TXT"
-    printf "ms0:/seplugins/wpa2psp.prx 1\n" > "${PSP_PATH}/seplugins/GAME.TXT"
-    echo -e "${GREEN}  → VSH.TXT and GAME.TXT configured${NC}"
+    # Create plugin config files safely without overwriting
+    grep -q -i "${PSP_DRIVE_PREFIX}:/seplugins/wpa2psp.prx" "${PSP_PATH}/seplugins/VSH.TXT" 2>/dev/null || printf "${PSP_DRIVE_PREFIX}:/seplugins/wpa2psp.prx 1\n" >> "${PSP_PATH}/seplugins/VSH.TXT"
+    grep -q -i "${PSP_DRIVE_PREFIX}:/seplugins/wpa2psp.prx" "${PSP_PATH}/seplugins/GAME.TXT" 2>/dev/null || printf "${PSP_DRIVE_PREFIX}:/seplugins/wpa2psp.prx 1\n" >> "${PSP_PATH}/seplugins/GAME.TXT"
+    echo -e "${GREEN}  → VSH.TXT and GAME.TXT configured safely${NC}"
 fi
 
 # ============================================================

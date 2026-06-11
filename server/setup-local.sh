@@ -29,8 +29,10 @@ echo -e "${YELLOW}[1/6]${NC} Checking dependencies..."
 MISSING=""
 
 if ! command -v node &> /dev/null; then MISSING="$MISSING node"; fi
+if ! command -v npm &> /dev/null; then MISSING="$MISSING npm"; fi
 if ! command -v ffmpeg &> /dev/null; then MISSING="$MISSING ffmpeg"; fi
 if ! command -v python3 &> /dev/null; then MISSING="$MISSING python3"; fi
+if ! command -v pip3 &> /dev/null; then MISSING="$MISSING pip3"; fi
 if ! command -v yt-dlp &> /dev/null; then MISSING="$MISSING yt-dlp"; fi
 
 if [ -n "$MISSING" ]; then
@@ -58,7 +60,10 @@ if [ -n "$MISSING" ]; then
         elif command -v apt &> /dev/null; then
             sudo apt-get update -qq
             sudo apt-get install -y -qq nodejs npm ffmpeg python3 python3-pip > /dev/null 2>&1
-            pip3 install --quiet yt-dlp ytmusicapi 2>/dev/null
+            pip3 install --break-system-packages --quiet yt-dlp ytmusicapi 2>/dev/null
+        elif command -v dnf &> /dev/null; then
+            sudo dnf install -y -q nodejs npm ffmpeg python3 python3-pip > /dev/null 2>&1
+            pip3 install --break-system-packages --quiet yt-dlp ytmusicapi 2>/dev/null
         fi
     else
         echo -e "${RED}Please install missing dependencies and run again.${NC}"
@@ -67,7 +72,7 @@ if [ -n "$MISSING" ]; then
 fi
 
 # Install ytmusicapi if missing
-python3 -c "import ytmusicapi" 2>/dev/null || pip3 install --quiet ytmusicapi 2>/dev/null
+python3 -c "import ytmusicapi" 2>/dev/null || pip3 install --break-system-packages --quiet ytmusicapi 2>/dev/null
 
 echo -e "${GREEN}  → All dependencies found!${NC}"
 
@@ -78,9 +83,9 @@ echo ""
 echo -e "${YELLOW}[2/6]${NC} Detecting your local IP address..."
 
 if [[ "$OSTYPE" == "darwin"* ]]; then
-    LOCAL_IP=$(ipconfig getifaddr en0 2>/dev/null || ipconfig getifaddr en1 2>/dev/null || echo "")
+    LOCAL_IP=$(route get default 2>/dev/null | grep interface | awk '{print $2}' | xargs ipconfig getifaddr 2>/dev/null || echo "")
 else
-    LOCAL_IP=$(hostname -I 2>/dev/null | awk '{print $1}' || echo "")
+    LOCAL_IP=$(ip route get 1.1.1.1 2>/dev/null | awk '{for(i=1;i<=NF;i++) if($i=="src") print $(i+1)}' | head -n 1 || echo "")
 fi
 
 if [ -z "$LOCAL_IP" ]; then
@@ -106,10 +111,10 @@ read -p "Enter your YouTube API Key (or press Enter to skip): " YT_API_KEY
 echo ""
 echo -e "${YELLOW}[3/6]${NC} Installing server dependencies..."
 
-cd "$SCRIPT_DIR/cloudmedia" && npm install --quiet > /dev/null 2>&1
+cd "$SCRIPT_DIR/cloudmedia" && npm install --quiet > npm-install.log 2>&1 || { echo -e "${RED}  → Failed to install CloudMedia dependencies. Check npm-install.log${NC}"; exit 1; }
 echo -e "${GREEN}  → CloudMedia ready${NC}"
 
-cd "$SCRIPT_DIR/spotiflac" && npm install --quiet > /dev/null 2>&1
+cd "$SCRIPT_DIR/spotiflac" && npm install --quiet > npm-install.log 2>&1 || { echo -e "${RED}  → Failed to install SpotiFlac dependencies. Check npm-install.log${NC}"; exit 1; }
 echo -e "${GREEN}  → SpotiFlac ready${NC}"
 
 # yt2009

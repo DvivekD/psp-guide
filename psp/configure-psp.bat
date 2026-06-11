@@ -46,6 +46,11 @@ echo   Make sure your PSP is connected via USB and in USB mode.
 echo   (Settings ^> USB Connection on your PSP)
 echo.
 set /p PSP_DRIVE="Enter your PSP drive letter (e.g. E): "
+if "%PSP_DRIVE%"=="" (
+    echo   ERROR: You must enter a drive letter!
+    pause
+    exit /b 1
+)
 set PSP_DRIVE=%PSP_DRIVE::=%:
 if not exist "%PSP_DRIVE%\" (
     echo   ERROR: Drive %PSP_DRIVE% does not exist!
@@ -97,10 +102,15 @@ if exist "%PSP_DRIVE%\PSP\GAME\GoTube\psp_plugins\" (
 
 REM Copy entire GoTube engine (EBOOT, GT, PRX modules, site.js, etc.)
 xcopy /S /Y /Q "%SCRIPT_DIR%GoTube\*" "%PSP_DRIVE%\PSP\GAME\GoTube\" >nul
+if %ERRORLEVEL% NEQ 0 (
+    echo   ERROR: Failed to copy GoTube engine. Is the PSP memory stick full or read-only?
+    pause
+    exit /b 1
+)
 echo   - GoTube engine installed
 
 REM Replace placeholder IP in cfg.js
-powershell -Command "(Get-Content '%PSP_DRIVE%\PSP\GAME\GoTube\cfg.js') -replace 'YOUR_SERVER_IP', '%SERVER_IP%' | Set-Content '%PSP_DRIVE%\PSP\GAME\GoTube\cfg.js'" >nul 2>&1
+powershell -Command "(Get-Content -LiteralPath '%PSP_DRIVE%\PSP\GAME\GoTube\cfg.js') -replace 'YOUR_SERVER_IP', '%SERVER_IP%' | Set-Content -LiteralPath '%PSP_DRIVE%\PSP\GAME\GoTube\cfg.js' -Encoding ASCII" >nul 2>&1
 echo   - cfg.js configured with IP: %SERVER_IP%
 
 REM Create site plugins directory
@@ -113,7 +123,7 @@ for %%f in (YouTubeHQ.js CloudMedia.js SpotiFLAC.js) do (
     if exist "%SCRIPT_DIR%plugins\%%f" (
         copy /Y "%SCRIPT_DIR%plugins\%%f" "%PSP_DRIVE%\PSP\GAME\GoTube\site\%%f" >nul
         REM Replace YOUR_SERVER_IP with actual IP using PowerShell
-        powershell -Command "(Get-Content '%PSP_DRIVE%\PSP\GAME\GoTube\site\%%f') -replace 'YOUR_SERVER_IP', '%SERVER_IP%' | Set-Content '%PSP_DRIVE%\PSP\GAME\GoTube\site\%%f'" >nul 2>&1
+        powershell -Command "(Get-Content -LiteralPath '%PSP_DRIVE%\PSP\GAME\GoTube\site\%%f') -replace 'YOUR_SERVER_IP', '%SERVER_IP%' | Set-Content -LiteralPath '%PSP_DRIVE%\PSP\GAME\GoTube\site\%%f' -Encoding ASCII" >nul 2>&1
         echo   - %%f installed and configured
     )
 )
@@ -156,15 +166,17 @@ if exist "%SCRIPT_DIR%essentials\wpa2psp.prx" (
 )
 
 REM Create/Update VSH.TXT (dashboard plugins)
-(
-echo ms0:/seplugins/wpa2psp.prx 1
-) > "%PSP_DRIVE%\seplugins\VSH.TXT"
+findstr /I /C:"ms0:/seplugins/wpa2psp.prx 1" "%PSP_DRIVE%\seplugins\VSH.TXT" >nul 2>&1
+if %ERRORLEVEL% NEQ 0 (
+    echo ms0:/seplugins/wpa2psp.prx 1>> "%PSP_DRIVE%\seplugins\VSH.TXT"
+)
 echo   - VSH.TXT configured
 
 REM Create/Update GAME.TXT (in-game plugins)
-(
-echo ms0:/seplugins/wpa2psp.prx 1
-) > "%PSP_DRIVE%\seplugins\GAME.TXT"
+findstr /I /C:"ms0:/seplugins/wpa2psp.prx 1" "%PSP_DRIVE%\seplugins\GAME.TXT" >nul 2>&1
+if %ERRORLEVEL% NEQ 0 (
+    echo ms0:/seplugins/wpa2psp.prx 1>> "%PSP_DRIVE%\seplugins\GAME.TXT"
+)
 echo   - GAME.TXT configured
 
 :skip_plugins

@@ -3,7 +3,7 @@ const axios = require('axios');
 const { spawn, execSync } = require('child_process');
 const fs = require('fs');
 const path = require('path');
-const CryptoJS = require('crypto-js');
+const path = require('path');
 require('dotenv').config({ path: path.join(__dirname, '..', '.env') });
 
 const app = express();
@@ -24,6 +24,7 @@ function runYtDlp(args) {
         let stdout = '';
         let stderr = '';
         const yt = spawn('yt-dlp', args);
+        yt.on('error', err => reject(err.message));
         yt.stdout.on('data', data => stdout += data.toString());
         yt.stderr.on('data', data => stderr += data.toString());
         yt.on('close', code => {
@@ -153,11 +154,12 @@ setInterval(function() {
 // ENDPOINT: /img — HTTPS→HTTP Image Proxy
 // ============================================================
 app.get('/img', async function(req, res) {
-    var url = req.query.url;
-    if (url && (url.includes("googleusercontent.com") || url.includes("ggpht.com"))) {
-        url = url.replace(/=w[0-9]+-h[0-9]+.*$/, "=w480-h272-n-p-k-c0x00ffffff-no-rj");
-    }
-    if (!url) return res.sendStatus(400);
+    try {
+        var url = req.query.url;
+        if (!url) return res.sendStatus(400);
+        if (url && (url.includes("googleusercontent.com") || url.includes("ggpht.com"))) {
+            url = url.replace(/=w[0-9]+-h[0-9]+.*$/, "=w480-h272-n-p-k-c0x00ffffff-no-rj");
+        }
     if (imageCache.has(url)) {
         var cached = imageCache.get(url);
         res.writeHead(200, { 'Content-Type': 'image/jpeg', 'Content-Length': cached.length, 'Cache-Control': 'public, max-age=86400' });
@@ -171,6 +173,7 @@ app.get('/img', async function(req, res) {
         res.writeHead(200, { 'Content-Type': imgRes.headers['content-type'] || 'image/jpeg', 'Content-Length': imgBuffer.length, 'Cache-Control': 'public, max-age=86400' });
         res.end(imgBuffer);
     } catch (e) { res.sendStatus(404); }
+    } catch (err) { res.sendStatus(400); }
 });
 
 // ============================================================
@@ -354,16 +357,20 @@ app.get('/jiosaavn_get_link', function(req, res) {
 // ENDPOINT: /jiosaavn_stream — Audio to FLV
 // ============================================================
 app.get('/jiosaavn_stream', async function(req, res) {
-    var id = req.query.id;
-    var safeId = 'jio_' + id.replace(/[^a-zA-Z0-9_-]/g, '_').substring(0, 80);
-    var outputFile = path.join(assetsDir, safeId + '.flv');
+    try {
+        var id = req.query.id;
+        if (!id) return res.sendStatus(400);
+        var safeId = 'jio_' + id.replace(/[^a-zA-Z0-9_-]/g, '_').substring(0, 80);
+        var outputFile = path.join(assetsDir, safeId + '.flv');
 
-    function serveFLV() {
-        if (!fs.existsSync(outputFile)) return res.sendStatus(404);
-        var stat = fs.statSync(outputFile);
-        res.writeHead(200, { 'Content-Type': 'video/x-flv', 'Connection': 'close' });
-        fs.createReadStream(outputFile).on('error', () => {}).pipe(res).on('error', () => {});
-    }
+        function serveFLV() {
+            try {
+                if (!fs.existsSync(outputFile)) return res.sendStatus(404);
+                var stat = fs.statSync(outputFile);
+                res.writeHead(200, { 'Content-Type': 'video/x-flv', 'Connection': 'close' });
+                fs.createReadStream(outputFile).on('error', () => {}).pipe(res).on('error', () => {});
+            } catch(e) { res.status(500).end(); }
+        }
 
     if (fs.existsSync(outputFile) && fs.statSync(outputFile).size > 100 * 1024) return serveFLV();
     if (activeTranscodes.has(safeId)) {
@@ -389,23 +396,27 @@ app.get('/jiosaavn_stream', async function(req, res) {
         var w2 = 0;
         var p2 = setInterval(() => { w2 += 500; if (fs.existsSync(outputFile) && fs.statSync(outputFile).size > 100 * 1024) { clearInterval(p2); return serveFLV(); } if (w2 >= 12000) { clearInterval(p2); return res.sendStatus(404); } }, 500);
     } catch(err) { activeTranscodes.delete(safeId); res.status(500).end(); }
+    } catch(err) { res.status(500).end(); }
 });
 
 // ============================================================
 // ENDPOINT: /play_audio — Audio muxed into black FLV
 // ============================================================
 app.get('/play_audio', async function(req, res) {
-    var url = req.query.url || '';
-    var id = req.query.id || '';
-    if (!url || !id) return res.sendStatus(400);
-    var safeId = id.replace(/[^a-zA-Z0-9_-]/g, '_');
-    var outputFile = path.join(assetsDir, safeId + '_audio.flv');
+    try {
+        var url = req.query.url || '';
+        var id = req.query.id || '';
+        if (!url || !id) return res.sendStatus(400);
+        var safeId = id.replace(/[^a-zA-Z0-9_-]/g, '_');
+        var outputFile = path.join(assetsDir, safeId + '_audio.flv');
 
-    function serveFLV() {
-        if (!fs.existsSync(outputFile)) return res.sendStatus(404);
-        res.writeHead(200, { 'Content-Type': 'video/x-flv', 'Connection': 'close' });
-        fs.createReadStream(outputFile).on('error', () => {}).pipe(res).on('error', () => {});
-    }
+        function serveFLV() {
+            try {
+                if (!fs.existsSync(outputFile)) return res.sendStatus(404);
+                res.writeHead(200, { 'Content-Type': 'video/x-flv', 'Connection': 'close' });
+                fs.createReadStream(outputFile).on('error', () => {}).pipe(res).on('error', () => {});
+            } catch(e) { res.status(500).end(); }
+        }
 
     if (fs.existsSync(outputFile) && fs.statSync(outputFile).size > 500 * 1024) return serveFLV();
     if (activeTranscodes.has(safeId)) {
@@ -421,6 +432,7 @@ app.get('/play_audio', async function(req, res) {
     ffmpeg.on('close', () => activeTranscodes.delete(safeId));
     var w2 = 0;
     var p2 = setInterval(() => { w2 += 500; if (fs.existsSync(outputFile) && fs.statSync(outputFile).size > 500 * 1024) { clearInterval(p2); return serveFLV(); } if (w2 >= 9000) { clearInterval(p2); return res.sendStatus(404); } }, 500);
+    } catch(err) { res.status(500).end(); }
 });
 
 // ============================================================
@@ -457,38 +469,43 @@ function getMediaInfo(videoUrl, refererStr) {
 const activeTranscodesMap = new Map();
 
 app.get('/play', async function(req, res) {
-    var url = req.query.url || '';
-    var id = req.query.id || '';
-    var resumePos = parseInt(req.query.resume) || 0;
-    var title = req.query.title || id;
-    if (!url || !id || url === 'ERROR') return res.sendStatus(400);
+    try {
+        var url = req.query.url || '';
+        var id = req.query.id || '';
+        var resumePos = parseInt(req.query.resume) || 0;
+        var title = req.query.title || id;
+        if (!url || !id || url === 'ERROR') return res.sendStatus(400);
 
-    var referer = '';
-    if (url.indexOf('|||') !== -1) { var parts = url.split('|||'); url = parts[0]; referer = parts[1] || ''; }
+        var referer = '';
+        if (url.indexOf('|||') !== -1) { var parts = url.split('|||'); url = parts[0]; referer = parts[1] || ''; }
 
-    var safeId = id.replace(/[^a-zA-Z0-9_-]/g, '_');
-    if (resumePos > 0) safeId = safeId + '_r' + resumePos;
-    var outputFile = path.join(assetsDir, safeId + '.flv');
+        var safeId = id.replace(/[^a-zA-Z0-9_-]/g, '_');
+        if (resumePos > 0) safeId = safeId + '_r' + resumePos;
+        var outputFile = path.join(assetsDir, safeId + '.flv');
 
-    function serveFLV() {
-        if (!fs.existsSync(outputFile)) return res.sendStatus(404);
-        res.writeHead(200, { 'Content-Type': 'video/x-flv', 'Connection': 'close' });
-        var stream = fs.createReadStream(outputFile);
-        stream.pipe(res).on('error', () => {});
-        res.on('close', function() {
-            var bytesWritten = res.socket ? res.socket.bytesWritten : 0;
-            var watchedSeconds = bytesWritten / ((900000 + 128000) / 8);
-            var isFinished = false;
-            if (!activeTranscodesMap.has(safeId) && fs.existsSync(outputFile)) {
-                if (fs.statSync(outputFile).size > 0 && bytesWritten >= fs.statSync(outputFile).size * 0.9) isFinished = true;
-            }
-            if (watchedSeconds > 30 && !isFinished) {
-                var resumeAt = Math.max(0, Math.floor(watchedSeconds + resumePos - 30));
-                resumeData[id] = { position: resumeAt, title: title, url: url + (referer ? '|||' + referer : ''), referer: referer, timestamp: Date.now() };
-                saveResumeData();
-            } else if (isFinished && resumeData[id]) { delete resumeData[id]; saveResumeData(); }
-        });
-    }
+        function serveFLV() {
+            try {
+                if (!fs.existsSync(outputFile)) return res.sendStatus(404);
+                res.writeHead(200, { 'Content-Type': 'video/x-flv', 'Connection': 'close' });
+                var stream = fs.createReadStream(outputFile);
+                stream.pipe(res).on('error', () => {});
+                res.on('close', function() {
+                    try {
+                        var bytesWritten = res.socket ? res.socket.bytesWritten : 0;
+                        var watchedSeconds = bytesWritten / ((900000 + 128000) / 8);
+                        var isFinished = false;
+                        if (!activeTranscodesMap.has(safeId) && fs.existsSync(outputFile)) {
+                            if (fs.statSync(outputFile).size > 0 && bytesWritten >= fs.statSync(outputFile).size * 0.9) isFinished = true;
+                        }
+                        if (watchedSeconds > 30 && !isFinished) {
+                            var resumeAt = Math.max(0, Math.floor(watchedSeconds + resumePos - 30));
+                            resumeData[id] = { position: resumeAt, title: title, url: url + (referer ? '|||' + referer : ''), referer: referer, timestamp: Date.now() };
+                            saveResumeData();
+                        } else if (isFinished && resumeData[id]) { delete resumeData[id]; saveResumeData(); }
+                    } catch(e) {}
+                });
+            } catch(e) { res.status(500).end(); }
+        }
 
     if (fs.existsSync(outputFile) && fs.statSync(outputFile).size > 500 * 1024) return serveFLV();
     if (activeTranscodesMap.has(safeId)) {
@@ -512,6 +529,7 @@ app.get('/play', async function(req, res) {
 
     var w2 = 0;
     var p2 = setInterval(() => { w2 += 500; if (fs.existsSync(outputFile) && fs.statSync(outputFile).size > 500 * 1024) { clearInterval(p2); return serveFLV(); } if (w2 >= 15000) { clearInterval(p2); return res.sendStatus(404); } }, 500);
+    } catch(err) { res.status(500).end(); }
 });
 
 // Health check

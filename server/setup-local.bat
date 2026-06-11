@@ -31,6 +31,14 @@ if %ERRORLEVEL% NEQ 0 (
 )
 echo   - Node.js: OK
 
+where npm >nul 2>&1
+if %ERRORLEVEL% NEQ 0 (
+    echo   ERROR: npm is not installed or not in PATH!
+    pause
+    exit /b 1
+)
+echo   - npm: OK
+
 where ffmpeg >nul 2>&1
 if %ERRORLEVEL% NEQ 0 (
     echo   WARNING: FFmpeg is not installed!
@@ -44,23 +52,27 @@ if %ERRORLEVEL% NEQ 0 (
 )
 echo   - FFmpeg: OK
 
-where python >nul 2>&1
+where py >nul 2>&1
 if %ERRORLEVEL% NEQ 0 (
-    where python3 >nul 2>&1
+    where python >nul 2>&1
     if %ERRORLEVEL% NEQ 0 (
-        echo   WARNING: Python is not installed!
+        echo   WARNING: Python is not installed or not in PATH!
         echo   Download it from: https://www.python.org/downloads/
         echo   IMPORTANT: Check "Add Python to PATH" during install!
         echo.
         start https://www.python.org/downloads/
         echo   After installing Python, press any key to continue...
         pause >nul
+    ) else (
+        set PYTHON_CMD=python
     )
+) else (
+    set PYTHON_CMD=py
 )
 echo   - Python: OK
 
 echo   Installing yt-dlp and ytmusicapi...
-pip install --quiet yt-dlp ytmusicapi 2>nul || pip3 install --quiet yt-dlp ytmusicapi 2>nul
+%PYTHON_CMD% -m pip install --user --quiet yt-dlp ytmusicapi 2>nul
 echo   - yt-dlp: OK
 
 echo.
@@ -78,13 +90,9 @@ set /p YT_API_KEY="   Enter your YouTube API Key (or press Enter to skip): "
 echo.
 echo [3/5] Detecting your local IP address...
 
-for /f "tokens=2 delims=:" %%a in ('ipconfig ^| findstr "IPv4"') do (
+for /f "usebackq tokens=*" %%a in (`powershell -Command "(Get-NetIPConfiguration | Where-Object { $_.IPv4DefaultGateway -ne $null } | Select-Object -ExpandProperty IPv4Address | Select-Object -First 1).IPAddress"`) do (
     set LOCAL_IP=%%a
-    goto :found_ip
 )
-:found_ip
-REM Trim leading space
-set LOCAL_IP=%LOCAL_IP: =%
 
 if "%LOCAL_IP%"=="" (
     set /p LOCAL_IP="Could not detect IP. Enter your local IP: "
@@ -106,12 +114,22 @@ echo [4/5] Installing server dependencies...
 set SCRIPT_DIR=%~dp0
 
 pushd "%SCRIPT_DIR%cloudmedia"
-call npm install --quiet >nul 2>&1
+call npm install --quiet > npm-install.log 2>&1
+if %ERRORLEVEL% NEQ 0 (
+    echo   ERROR: Failed to install CloudMedia dependencies! Check cloudmedia\npm-install.log
+    pause
+    exit /b 1
+)
 echo   - CloudMedia: Ready
 popd
 
 pushd "%SCRIPT_DIR%spotiflac"
-call npm install --quiet >nul 2>&1
+call npm install --quiet > npm-install.log 2>&1
+if %ERRORLEVEL% NEQ 0 (
+    echo   ERROR: Failed to install SpotiFlac dependencies! Check spotiflac\npm-install.log
+    pause
+    exit /b 1
+)
 echo   - SpotiFlac: Ready
 popd
 
@@ -147,18 +165,18 @@ REM Start Servers
 REM ============================================================
 echo [5/5] Starting servers...
 
-start "CloudMedia (Port 8082)" cmd /k "cd /d "%SCRIPT_DIR%cloudmedia" && node server.js"
+start "CloudMedia (Port 8082)" /D "%SCRIPT_DIR%cloudmedia" cmd /k "node server.js"
 echo   - CloudMedia started on port 8082
 
-start "SpotiFlac (Port 8083)" cmd /k "cd /d "%SCRIPT_DIR%spotiflac" && node server.js"
+start "SpotiFlac (Port 8083)" /D "%SCRIPT_DIR%spotiflac" cmd /k "node server.js"
 echo   - SpotiFlac started on port 8083
 
 if exist "%SCRIPT_DIR%yt2009\back\config.json" (
-    powershell -Command "(Get-Content '%SCRIPT_DIR%yt2009\back\config.json') -replace 'YOUR_SERVER_IP', '%LOCAL_IP%' | Set-Content '%SCRIPT_DIR%yt2009\back\config.json'"
+    powershell -Command "(Get-Content -LiteralPath '%SCRIPT_DIR%yt2009\back\config.json') -replace 'YOUR_SERVER_IP', $env:LOCAL_IP | Set-Content -LiteralPath '%SCRIPT_DIR%yt2009\back\config.json'"
     if not "%YT_API_KEY%"=="" (
-        powershell -Command "(Get-Content '%SCRIPT_DIR%yt2009\back\config.json') -replace '\"using_ssl\": false', '\"data_api_key\": \"%YT_API_KEY%\", \"using_ssl\": false' | Set-Content '%SCRIPT_DIR%yt2009\back\config.json'"
+        powershell -Command "(Get-Content -LiteralPath '%SCRIPT_DIR%yt2009\back\config.json') -replace '\"using_ssl\": false', '\"data_api_key\": \"$env:YT_API_KEY\", \"using_ssl\": false' | Set-Content -LiteralPath '%SCRIPT_DIR%yt2009\back\config.json'"
     )
-    start "YouTubeHQ (Port 8081)" cmd /k "cd /d "%SCRIPT_DIR%yt2009\back" && node backend.js"
+    start "YouTubeHQ (Port 8081)" /D "%SCRIPT_DIR%yt2009\back" cmd /k "node backend.js"
     echo   - YouTubeHQ started on port 8081
 )
 

@@ -96,24 +96,26 @@ if exist "%PSP_DRIVE%\seplugins\wpa2psp.prx" (
     echo   - wpa2psp.prx was not installed (skipping)
 )
 
-REM Delete plugin config files (only if they contain wpa2psp entries)
+REM Remove plugin config lines safely (only wpa2psp)
 if exist "%PSP_DRIVE%\seplugins\GAME.TXT" (
     findstr /I "wpa2psp" "%PSP_DRIVE%\seplugins\GAME.TXT" >nul 2>&1
     if %ERRORLEVEL% EQU 0 (
-        del /F /Q "%PSP_DRIVE%\seplugins\GAME.TXT"
-        echo   - GAME.TXT removed
+        findstr /V /I "wpa2psp" "%PSP_DRIVE%\seplugins\GAME.TXT" > "%PSP_DRIVE%\seplugins\GAME.TXT.tmp"
+        move /Y "%PSP_DRIVE%\seplugins\GAME.TXT.tmp" "%PSP_DRIVE%\seplugins\GAME.TXT" >nul
+        echo   - wpa2psp removed from GAME.TXT
     ) else (
-        echo   - GAME.TXT has other plugins, leaving it alone
+        echo   - GAME.TXT does not contain wpa2psp
     )
 )
 
 if exist "%PSP_DRIVE%\seplugins\VSH.TXT" (
     findstr /I "wpa2psp" "%PSP_DRIVE%\seplugins\VSH.TXT" >nul 2>&1
     if %ERRORLEVEL% EQU 0 (
-        del /F /Q "%PSP_DRIVE%\seplugins\VSH.TXT"
-        echo   - VSH.TXT removed
+        findstr /V /I "wpa2psp" "%PSP_DRIVE%\seplugins\VSH.TXT" > "%PSP_DRIVE%\seplugins\VSH.TXT.tmp"
+        move /Y "%PSP_DRIVE%\seplugins\VSH.TXT.tmp" "%PSP_DRIVE%\seplugins\VSH.TXT" >nul
+        echo   - wpa2psp removed from VSH.TXT
     ) else (
-        echo   - VSH.TXT has other plugins, leaving it alone
+        echo   - VSH.TXT does not contain wpa2psp
     )
 )
 

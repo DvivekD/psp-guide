@@ -107,19 +107,27 @@ fi
 # Delete plugin config files (only if they contain wpa2psp entries)
 if [ -f "${PSP_PATH}/seplugins/GAME.TXT" ]; then
     if grep -qi "wpa2psp" "${PSP_PATH}/seplugins/GAME.TXT"; then
-        rm -f "${PSP_PATH}/seplugins/GAME.TXT"
-        echo -e "${GREEN}  → GAME.TXT removed${NC}"
+        if [[ "$OSTYPE" == "darwin"* ]]; then
+            sed -i '' '/wpa2psp/Id' "${PSP_PATH}/seplugins/GAME.TXT"
+        else
+            sed -i '/wpa2psp/Id' "${PSP_PATH}/seplugins/GAME.TXT"
+        fi
+        echo -e "${GREEN}  → wpa2psp removed from GAME.TXT${NC}"
     else
-        echo "  - GAME.TXT has other plugins, leaving it alone"
+        echo "  - GAME.TXT does not contain wpa2psp"
     fi
 fi
 
 if [ -f "${PSP_PATH}/seplugins/VSH.TXT" ]; then
     if grep -qi "wpa2psp" "${PSP_PATH}/seplugins/VSH.TXT"; then
-        rm -f "${PSP_PATH}/seplugins/VSH.TXT"
-        echo -e "${GREEN}  → VSH.TXT removed${NC}"
+        if [[ "$OSTYPE" == "darwin"* ]]; then
+            sed -i '' '/wpa2psp/Id' "${PSP_PATH}/seplugins/VSH.TXT"
+        else
+            sed -i '/wpa2psp/Id' "${PSP_PATH}/seplugins/VSH.TXT"
+        fi
+        echo -e "${GREEN}  → wpa2psp removed from VSH.TXT${NC}"
     else
-        echo "  - VSH.TXT has other plugins, leaving it alone"
+        echo "  - VSH.TXT does not contain wpa2psp"
     fi
 fi
 

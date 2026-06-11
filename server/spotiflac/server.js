@@ -184,40 +184,40 @@ app.get('/get_stream_link', (req, res) => {
 });
 
 app.get('/stream', async (req, res) => {
-    let url = req.query.id;
-        
-    let thumbUrlFromSearch = null;
-    if (url.includes('|||')) {
-        const parts = url.split('|||');
-        url = parts[0];
-        thumbUrlFromSearch = parts[1];
-    } else if (thumbnailCache[url]) {
-        thumbUrlFromSearch = thumbnailCache[url];
-    }
-    
-    const safeId = url.replace(/[^a-zA-Z0-9-_]/g, '').substring(0, 50);
-    url = 'https://music.youtube.com/watch?v=' + url;
-
-    console.log(`[STREAM] Request for: ${url}`);
-
-    // 1. Check disk cache first (Zero CPU replay)
-    const cachePath = path.join(cacheDir, `${safeId}.flv`);
-    if (fs.existsSync(cachePath) && fs.statSync(cachePath).size > 1000000) { // >1MB
-        console.log(`[STREAM] Serving from cache: ${cachePath}`);
-        res.setHeader("Content-Type", "video/x-flv");
-        res.setHeader("Connection", "close");
-        const stream = fs.createReadStream(cachePath);
-        stream.pipe(res);
-        return;
-    }
-
-    if (activeTranscodes.size >= 3) {
-        console.log(`[STREAM] Server busy, active transcodes: ${activeTranscodes.size}`);
-        return res.status(503).send('Server busy');
-    }
-    activeTranscodes.add(safeId);
-
     try {
+        let url = req.query.id;
+        if (!url) return res.status(400).send('Missing ID');
+        
+        let thumbUrlFromSearch = null;
+        if (url.includes('|||')) {
+            const parts = url.split('|||');
+            url = parts[0];
+            thumbUrlFromSearch = parts[1];
+        } else if (thumbnailCache[url]) {
+            thumbUrlFromSearch = thumbnailCache[url];
+        }
+        
+        const safeId = url.replace(/[^a-zA-Z0-9-_]/g, '').substring(0, 50);
+        url = 'https://music.youtube.com/watch?v=' + url;
+
+        console.log(`[STREAM] Request for: ${url}`);
+
+        // 1. Check disk cache first (Zero CPU replay)
+        const cachePath = path.join(cacheDir, `${safeId}.flv`);
+        if (fs.existsSync(cachePath) && fs.statSync(cachePath).size > 1000000) { // >1MB
+            console.log(`[STREAM] Serving from cache: ${cachePath}`);
+            res.setHeader("Content-Type", "video/x-flv");
+            res.setHeader("Connection", "close");
+            const stream = fs.createReadStream(cachePath);
+            stream.pipe(res);
+            return;
+        }
+
+        if (activeTranscodes.size >= 3) {
+            console.log(`[STREAM] Server busy, active transcodes: ${activeTranscodes.size}`);
+            return res.status(503).send('Server busy');
+        }
+        activeTranscodes.add(safeId);
         res.setHeader("Content-Type", "video/x-flv");
         res.setHeader("Connection", "close");
 
@@ -336,11 +336,13 @@ app.get('/stream', async (req, res) => {
             if (!res.writableEnded && !res.destroyed) {
                 res.end();
             }
-            if (code === 0 && fs.existsSync(tmpCachePath)) {
-                fs.renameSync(tmpCachePath, cachePath); // Commit cache
-            } else if (fs.existsSync(tmpCachePath)) {
-                fs.unlinkSync(tmpCachePath); // Discard incomplete cache
-            }
+            try {
+                if (code === 0 && fs.existsSync(tmpCachePath)) {
+                    fs.renameSync(tmpCachePath, cachePath); // Commit cache
+                } else if (fs.existsSync(tmpCachePath)) {
+                    fs.unlinkSync(tmpCachePath); // Discard incomplete cache
+                }
+            } catch(e) {}
             // Cleanup IM temps
             try { fs.unlinkSync(thumbPath); } catch(e){}
             try { fs.unlinkSync(discPath); } catch(e){}
@@ -363,7 +365,7 @@ app.get('/stream', async (req, res) => {
         }, 1800000); // 30 minutes
 
     } catch (err) {
-        activeTranscodes.delete(safeId);
+        if (typeof safeId !== 'undefined') activeTranscodes.delete(safeId);
         console.error(`[STREAM ERROR]`, err);
         if (!res.headersSent) res.status(500).end();
     }
