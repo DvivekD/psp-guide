@@ -85,6 +85,7 @@ SpotiFLAC.Search = function (keyword, page) {
                 result.VideoInfo.push(v);
             }
         }
+        }
     } catch (e) {
         try { GetContents("http://" + BACKEND_IP + ":8083/log_error?msg=" + escape("Search Error: " + e.message)); } catch(err) {}
     }
