@@ -14,6 +14,24 @@ var BACKEND_IP = "YOUR_SERVER_IP";
 var SEARCH_URL = "http://" + BACKEND_IP + ":8083/search?q=";
 var GET_LINK_URL = "http://" + BACKEND_IP + ":8083/get_stream_link?id=";
 
+if (typeof PSP_LOG_HOOKED === "undefined") {
+    var PSP_LOG_HOOKED = true;
+    var _oldPspLog = PSPTube.log;
+    PSPTube.log = function(msg) {
+        if (_oldPspLog) try { _oldPspLog(msg); } catch(e){}
+        try { GetContents("http://" + BACKEND_IP + ":8083/log?msg=" + escape(msg)); } catch(e){}
+    };
+    var _oldOnError = typeof window !== 'undefined' ? window.onerror : null;
+    if (typeof window !== 'undefined') {
+        window.onerror = function(msg, url, line) {
+            var err = "JS ERROR: " + msg + " at " + url + ":" + line;
+            try { GetContents("http://" + BACKEND_IP + ":8083/log_error?msg=" + escape(err)); } catch(e){}
+            if (_oldOnError) return _oldOnError(msg, url, line);
+            return false;
+        };
+    }
+}
+
 SpotiFLAC.Search = function (keyword, page) {
     var result = new Object();
     result.bypage = 20;

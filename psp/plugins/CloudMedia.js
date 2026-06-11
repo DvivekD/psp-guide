@@ -7,6 +7,24 @@ CloudMedia.rev = 3;
 CloudMedia.SearchDesc = "Anime, Movies & Resume";
 CloudMedia.Name = "CloudMedia";
 
+if (typeof PSP_LOG_HOOKED === "undefined") {
+    var PSP_LOG_HOOKED = true;
+    var _oldPspLog = PSPTube.log;
+    PSPTube.log = function(msg) {
+        if (_oldPspLog) try { _oldPspLog(msg); } catch(e){}
+        try { GetContents("http://YOUR_SERVER_IP:8082/log?msg=" + escape(msg)); } catch(e){}
+    };
+    var _oldOnError = typeof window !== 'undefined' ? window.onerror : null;
+    if (typeof window !== 'undefined') {
+        window.onerror = function(msg, url, line) {
+            var err = "JS ERROR: " + msg + " at " + url + ":" + line;
+            try { GetContents("http://YOUR_SERVER_IP:8082/log_error?msg=" + escape(err)); } catch(e){}
+            if (_oldOnError) return _oldOnError(msg, url, line);
+            return false;
+        };
+    }
+}
+
 CloudMedia.Search = function (keyword, page) {
     try {
     // --- VOICE BRIDGE INTERCEPT ---

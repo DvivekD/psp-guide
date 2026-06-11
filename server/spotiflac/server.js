@@ -380,6 +380,12 @@ app.get('/log_error', (req, res) => {
     res.json({ success: true });
 });
 
+app.get('/log', (req, res) => {
+    const msg = req.query.msg || 'Empty log';
+    console.log('\x1b[36m[PSP LOG]\x1b[0m ' + msg.trim());
+    res.json({ success: true });
+});
+
 app.get('/debug', (req, res) => {
     const mem = process.memoryUsage();
     const results = [
