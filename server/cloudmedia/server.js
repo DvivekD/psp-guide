@@ -538,6 +538,26 @@ app.get('/', function(req, res) {
     res.json({ status: 'ok', version: 'v3', activeTranscodes: Array.from(activeTranscodes), cacheFiles: fs.existsSync(assetsDir) ? fs.readdirSync(assetsDir).filter(f => f.endsWith('.flv')).length : 0, imageCacheSize: imageCache.size, resumeEntries: Object.keys(resumeData).length, memoryMB: (mem.rss / 1024 / 1024).toFixed(0) });
 });
 
+// ============================================================
+// TELEMETRY & DIAGNOSTICS
+// ============================================================
+app.get('/log_error', (req, res) => {
+    const msg = req.query.msg || 'Unknown error';
+    console.error('\n\x1b[41m\x1b[37m[PSP CLIENT ERROR]\x1b[0m ' + msg + '\n');
+    res.json({ success: true });
+});
+
+app.get('/debug', (req, res) => {
+    const mem = process.memoryUsage();
+    const results = [
+        { id: 'diag1', title: `[CloudMedia] Server IP: ${BACKEND_IP}`, description: 'Diagnostics', image: 'https://i.imgur.com/4N3a3gH.png' },
+        { id: 'diag2', title: `Port: ${PORT}`, description: 'Diagnostics', image: 'https://i.imgur.com/4N3a3gH.png' },
+        { id: 'diag3', title: `RAM Usage: ${(mem.rss / 1024 / 1024).toFixed(0)} MB`, description: 'Diagnostics', image: 'https://i.imgur.com/4N3a3gH.png' },
+        { id: 'diag4', title: `Active Transcodes: ${activeTranscodes.size}`, description: 'Diagnostics', image: 'https://i.imgur.com/4N3a3gH.png' }
+    ];
+    res.json({ success: true, data: results });
+});
+
 app.listen(PORT, function() {
     console.log('\n========================================');
     console.log('  PSP Cloud Engine v3 on port ' + PORT);

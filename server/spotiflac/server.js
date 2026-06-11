@@ -371,6 +371,26 @@ app.get('/stream', async (req, res) => {
     }
 });
 
+// ============================================================
+// TELEMETRY & DIAGNOSTICS
+// ============================================================
+app.get('/log_error', (req, res) => {
+    const msg = req.query.msg || 'Unknown error';
+    console.error('\n\x1b[41m\x1b[37m[PSP CLIENT ERROR]\x1b[0m ' + msg + '\n');
+    res.json({ success: true });
+});
+
+app.get('/debug', (req, res) => {
+    const mem = process.memoryUsage();
+    const results = [
+        { id: 'diag1', url: 'diag1', title: `[SpotiFLAC] Server IP: ${config.BACKEND_IP}`, uploader: 'Diagnostics', duration_string: '0:00', thumbnail: 'https://i.imgur.com/4N3a3gH.png' },
+        { id: 'diag2', url: 'diag2', title: `Port: ${port}`, uploader: 'Diagnostics', duration_string: '0:00', thumbnail: 'https://i.imgur.com/4N3a3gH.png' },
+        { id: 'diag3', url: 'diag3', title: `RAM Usage: ${(mem.rss / 1024 / 1024).toFixed(0)} MB`, uploader: 'Diagnostics', duration_string: '0:00', thumbnail: 'https://i.imgur.com/4N3a3gH.png' },
+        { id: 'diag4', url: 'diag4', title: `Active Transcodes: ${activeTranscodes.size}`, uploader: 'Diagnostics', duration_string: '0:00', thumbnail: 'https://i.imgur.com/4N3a3gH.png' }
+    ];
+    res.json(results);
+});
+
 app.listen(port, () => {
     console.log(`SpotiFLAC Server listening on port ${port} (IP: ${config.BACKEND_IP})`);
 });

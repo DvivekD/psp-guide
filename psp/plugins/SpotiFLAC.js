@@ -20,18 +20,21 @@ SpotiFLAC.Search = function (keyword, page) {
     result.start = (page - 1) * result.bypage + 1;
     
     var url = "";
-    if (keyword == "v" || keyword == " ") {
-        url = "http://" + BACKEND_IP + ":8083/voice-search";
-    } else {
-        url = SEARCH_URL + escape(keyword) + "&page=" + page;
-    }
-    PSPTube.log("SpotiFLAC Search: " + url + "\n");
-    
-    var jsonString = GetContents(url);
-    result.VideoInfo = new Array();
-    result.total = 0;
-    
-    if (jsonString && jsonString.length > 5) {
+    try {
+        if (keyword == "!debug") {
+            url = "http://" + BACKEND_IP + ":8083/debug";
+        } else if (keyword == "v" || keyword == " ") {
+            url = "http://" + BACKEND_IP + ":8083/voice-search";
+        } else {
+            url = SEARCH_URL + escape(keyword) + "&page=" + page;
+        }
+        PSPTube.log("SpotiFLAC Search: " + url + "\n");
+        
+        var jsonString = GetContents(url);
+        result.VideoInfo = new Array();
+        result.total = 0;
+        
+        if (jsonString && jsonString.length > 5) {
         var items = jsonString.split('},{');
         if (items.length > 0) {
             result.total = items.length;
@@ -64,6 +67,8 @@ SpotiFLAC.Search = function (keyword, page) {
                 result.VideoInfo.push(v);
             }
         }
+    } catch (e) {
+        try { GetContents("http://" + BACKEND_IP + ":8083/log_error?msg=" + escape("Search Error: " + e.message)); } catch(err) {}
     }
     
     result.end = result.start - 1 + result.VideoInfo.length;

@@ -8,6 +8,7 @@ YouTubeHQ.SearchDesc = "YouTube HQ (1080p Downscaled)";
 YouTubeHQ.Name = "YouTubeHQ";
 
 YouTubeHQ.Search = function (keyword, page){
+    try {
     // --- VOICE BRIDGE INTERCEPT ---
     if (keyword === "v" || keyword === "V") {
         PSPTube.log("Fetching voice command...\n");
@@ -133,6 +134,9 @@ YouTubeHQ.Search = function (keyword, page){
 		v.URL	          = 'YouTubeHQ.play("'+v.id+'")';
 		result.VideoInfo.push(v);
 	}
+    } catch (e) {
+        try { GetContents("http://YOUR_SERVER_IP:8082/log_error?msg=" + escape("YouTubeHQ Search Error: " + e.message)); } catch(err) {}
+    }
 	result.end       = result.start-1+result.VideoInfo.length;
     
 	return result;
