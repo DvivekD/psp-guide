@@ -86,11 +86,18 @@ async function handleSearch(query, page, res) {
         
         const pyArgs = [pythonCmd, path.join(__dirname, 'ytm_search.py'), queryType, cleanQuery];
         const child = spawn(pyArgs[0], pyArgs.slice(1));
+        child.on('error', (err) => {
+            console.error(`[PYTHON ERROR] Could not spawn Python. Is it installed and in PATH?`, err.message);
+            if (!res.headersSent) res.status(500).json([]);
+        });
         
         let stdoutData = '';
         child.stdout.on('data', chunk => stdoutData += chunk);
         child.on('close', code => {
-            if (code !== 0) return res.status(500).send('Error searching');
+            if (code !== 0) {
+                if (!res.headersSent) return res.status(500).send('Error searching');
+                return;
+            }
             try {
                 const entries = JSON.parse(stdoutData);
                 entries.forEach(entry => {
@@ -233,20 +240,20 @@ app.get('/stream', async (req, res) => {
         thumbUrl = thumbUrlFromSearch || (videoId ? `https://i.ytimg.com/vi/${videoId}/maxresdefault.jpg` : null);
         
         if (thumbUrl) {
-            await new Promise(resolve => spawn('curl', ['-sL', '--fail', '-o', thumbPath, thumbUrl]).on('close', resolve));
+            await new Promise(resolve => spawn('curl', ['-sL', '--fail', '-o', thumbPath, thumbUrl]).on('close', resolve).on('error', resolve));
         }
         
         if (!fs.existsSync(thumbPath) || fs.statSync(thumbPath).size < 100) {
             if (videoId) {
                 thumbUrl = `https://i.ytimg.com/vi/${videoId}/maxresdefault.jpg`;
-                await new Promise(resolve => spawn('curl', ['-sL', '--fail', '-o', thumbPath, thumbUrl]).on('close', resolve));
+                await new Promise(resolve => spawn('curl', ['-sL', '--fail', '-o', thumbPath, thumbUrl]).on('close', resolve).on('error', resolve));
             }
         }
 
         if (!fs.existsSync(thumbPath) || fs.statSync(thumbPath).size < 100) {
             if (videoId) {
                 thumbUrl = `https://i.ytimg.com/vi/${videoId}/hqdefault.jpg`;
-                await new Promise(resolve => spawn('curl', ['-sL', '--fail', '-o', thumbPath, thumbUrl]).on('close', resolve));
+                await new Promise(resolve => spawn('curl', ['-sL', '--fail', '-o', thumbPath, thumbUrl]).on('close', resolve).on('error', resolve));
             }
         }
 
@@ -305,6 +312,7 @@ app.get('/stream', async (req, res) => {
 
         console.log(`[STREAM] Spawning ffmpeg pipeline... (IM: ${hasIm})`);
         const ffmpeg = spawn('ffmpeg', ffmpegArgs);
+        ffmpeg.on('error', (err) => console.log('[FFMPEG Error]', err));
 
         yt_proc.stdout.pipe(ffmpeg.stdin);
         
