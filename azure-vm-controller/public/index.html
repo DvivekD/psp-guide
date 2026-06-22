@@ -1,0 +1,1291 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0, user-scalable=no">
+<meta name="apple-mobile-web-app-capable" content="yes">
+<meta name="apple-mobile-web-app-status-bar-style" content="black-translucent">
+<title>PSP Cloud Streaming</title>
+<link rel="preconnect" href="https://fonts.googleapis.com">
+<link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+<link href="https://fonts.googleapis.com/css2?family=Inter:wght@300;400;500;600;700;800;900&family=JetBrains+Mono:wght@400;500;700&display=swap" rel="stylesheet">
+<style>
+/* ═══════════════════════════════════════════════════
+   CSS RESET & ROOT
+   ═══════════════════════════════════════════════════ */
+*, *::before, *::after { margin: 0; padding: 0; box-sizing: border-box; }
+
+:root {
+  --bg-primary: #0a0a0f;
+  --bg-secondary: #12121a;
+  --bg-card: rgba(18, 18, 30, 0.6);
+  --border-glass: rgba(255, 255, 255, 0.06);
+  --border-glow: rgba(255, 255, 255, 0.1);
+  --text-primary: #e8e8ef;
+  --text-secondary: #6b6b80;
+  --text-muted: #3e3e52;
+  --accent-cyan: #00e5ff;
+  --accent-purple: #b44aff;
+  --accent-pink: #ff2d7b;
+  --accent-green: #00ff88;
+  --accent-yellow: #ffcc00;
+  --accent-red: #ff3b5c;
+  --accent-orange: #ff8a3d;
+  --gradient-hero: linear-gradient(135deg, #0a0a0f 0%, #1a0a2e 50%, #0a0a0f 100%);
+  --gradient-cyan: linear-gradient(135deg, #00e5ff, #00b4d8);
+  --gradient-green: linear-gradient(135deg, #00ff88, #00cc6a);
+  --gradient-red: linear-gradient(135deg, #ff3b5c, #cc2244);
+  --gradient-yellow: linear-gradient(135deg, #ffcc00, #ff9500);
+  --glass-bg: rgba(255, 255, 255, 0.03);
+  --glass-border: rgba(255, 255, 255, 0.08);
+  --glass-shadow: 0 8px 32px rgba(0, 0, 0, 0.4);
+  --radius: 16px;
+  --radius-sm: 10px;
+  --radius-xs: 6px;
+  --font: 'Inter', -apple-system, BlinkMacSystemFont, sans-serif;
+  --mono: 'JetBrains Mono', 'SF Mono', 'Consolas', monospace;
+}
+
+html { font-size: 16px; }
+
+body {
+  font-family: var(--font);
+  background: var(--bg-primary);
+  color: var(--text-primary);
+  min-height: 100vh;
+  min-height: 100dvh;
+  overflow-x: hidden;
+  -webkit-font-smoothing: antialiased;
+  -moz-osx-font-smoothing: grayscale;
+}
+
+/* ═══════════════════════════════════════════════════
+   ANIMATED BACKGROUND
+   ═══════════════════════════════════════════════════ */
+.bg-canvas {
+  position: fixed;
+  inset: 0;
+  z-index: 0;
+  overflow: hidden;
+  pointer-events: none;
+}
+
+.bg-canvas::before {
+  content: '';
+  position: absolute;
+  top: -50%;
+  left: -50%;
+  width: 200%;
+  height: 200%;
+  background: radial-gradient(ellipse at 30% 20%, rgba(0, 229, 255, 0.04) 0%, transparent 50%),
+              radial-gradient(ellipse at 70% 80%, rgba(180, 74, 255, 0.04) 0%, transparent 50%),
+              radial-gradient(ellipse at 50% 50%, rgba(255, 45, 123, 0.02) 0%, transparent 60%);
+  animation: bgDrift 20s ease-in-out infinite alternate;
+}
+
+.bg-grid {
+  position: absolute;
+  inset: 0;
+  background-image:
+    linear-gradient(rgba(255,255,255,0.015) 1px, transparent 1px),
+    linear-gradient(90deg, rgba(255,255,255,0.015) 1px, transparent 1px);
+  background-size: 60px 60px;
+  mask-image: radial-gradient(ellipse at center, black 30%, transparent 80%);
+  -webkit-mask-image: radial-gradient(ellipse at center, black 30%, transparent 80%);
+}
+
+.bg-orb {
+  position: absolute;
+  border-radius: 50%;
+  filter: blur(80px);
+  opacity: 0.3;
+  animation: orbFloat 15s ease-in-out infinite;
+}
+
+.bg-orb:nth-child(2) {
+  width: 300px; height: 300px;
+  top: 10%; left: 10%;
+  background: var(--accent-cyan);
+  opacity: 0.05;
+  animation-duration: 18s;
+}
+
+.bg-orb:nth-child(3) {
+  width: 400px; height: 400px;
+  bottom: 10%; right: 5%;
+  background: var(--accent-purple);
+  opacity: 0.05;
+  animation-duration: 22s;
+  animation-delay: -5s;
+}
+
+@keyframes bgDrift {
+  0% { transform: translate(0, 0) rotate(0deg); }
+  100% { transform: translate(-2%, 2%) rotate(2deg); }
+}
+
+@keyframes orbFloat {
+  0%, 100% { transform: translate(0, 0) scale(1); }
+  33% { transform: translate(30px, -20px) scale(1.1); }
+  66% { transform: translate(-20px, 30px) scale(0.9); }
+}
+
+/* ═══════════════════════════════════════════════════
+   MAIN LAYOUT
+   ═══════════════════════════════════════════════════ */
+.app {
+  position: relative;
+  z-index: 1;
+  max-width: 680px;
+  margin: 0 auto;
+  padding: 20px 16px 40px;
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  gap: 28px;
+}
+
+/* ═══════════════════════════════════════════════════
+   HEADER
+   ═══════════════════════════════════════════════════ */
+.header {
+  text-align: center;
+  padding-top: 16px;
+  width: 100%;
+}
+
+.header__logo {
+  display: inline-flex;
+  align-items: center;
+  gap: 10px;
+  margin-bottom: 6px;
+}
+
+.header__icon {
+  width: 36px;
+  height: 36px;
+  background: linear-gradient(135deg, var(--accent-cyan), var(--accent-purple));
+  border-radius: 10px;
+  display: grid;
+  place-items: center;
+  font-size: 18px;
+  box-shadow: 0 4px 20px rgba(0, 229, 255, 0.2);
+}
+
+.header__title {
+  font-size: 1.5rem;
+  font-weight: 800;
+  letter-spacing: -0.03em;
+  background: linear-gradient(135deg, var(--text-primary) 0%, var(--accent-cyan) 100%);
+  -webkit-background-clip: text;
+  -webkit-text-fill-color: transparent;
+  background-clip: text;
+}
+
+.header__sub {
+  font-size: 0.75rem;
+  color: var(--text-secondary);
+  font-weight: 500;
+  letter-spacing: 0.15em;
+  text-transform: uppercase;
+}
+
+/* ═══════════════════════════════════════════════════
+   GLASS CARD
+   ═══════════════════════════════════════════════════ */
+.glass {
+  background: var(--glass-bg);
+  border: 1px solid var(--glass-border);
+  border-radius: var(--radius);
+  backdrop-filter: blur(20px);
+  -webkit-backdrop-filter: blur(20px);
+  box-shadow: var(--glass-shadow);
+  width: 100%;
+}
+
+/* ═══════════════════════════════════════════════════
+   STATUS BAR
+   ═══════════════════════════════════════════════════ */
+.status-bar {
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  gap: 10px;
+  padding: 14px 20px;
+  font-size: 0.85rem;
+  font-weight: 600;
+}
+
+.status-dot {
+  width: 10px;
+  height: 10px;
+  border-radius: 50%;
+  flex-shrink: 0;
+  background: var(--text-muted);
+  transition: background 0.4s, box-shadow 0.4s;
+}
+
+.status-dot.running {
+  background: var(--accent-green);
+  box-shadow: 0 0 12px var(--accent-green), 0 0 30px rgba(0, 255, 136, 0.2);
+  animation: pulse-green 2s ease-in-out infinite;
+}
+
+.status-dot.stopped {
+  background: var(--accent-red);
+  box-shadow: 0 0 8px rgba(255, 59, 92, 0.3);
+}
+
+.status-dot.booting, .status-dot.deallocating {
+  background: var(--accent-yellow);
+  box-shadow: 0 0 12px var(--accent-yellow), 0 0 30px rgba(255, 204, 0, 0.2);
+  animation: pulse-yellow 1s ease-in-out infinite;
+}
+
+.status-label {
+  transition: color 0.3s;
+}
+
+.status-label.running { color: var(--accent-green); }
+.status-label.stopped { color: var(--accent-red); }
+.status-label.booting, .status-label.deallocating { color: var(--accent-yellow); }
+
+@keyframes pulse-green {
+  0%, 100% { opacity: 1; transform: scale(1); }
+  50% { opacity: 0.5; transform: scale(1.3); }
+}
+
+@keyframes pulse-yellow {
+  0%, 100% { opacity: 1; transform: scale(1); }
+  50% { opacity: 0.4; transform: scale(1.4); }
+}
+
+/* ═══════════════════════════════════════════════════
+   POWER BUTTON
+   ═══════════════════════════════════════════════════ */
+.power-section {
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  gap: 16px;
+  padding: 20px 0;
+}
+
+.power-btn {
+  position: relative;
+  width: 140px;
+  height: 140px;
+  border-radius: 50%;
+  border: none;
+  cursor: pointer;
+  display: grid;
+  place-items: center;
+  background: var(--bg-secondary);
+  transition: transform 0.2s, box-shadow 0.4s;
+  outline: none;
+  -webkit-tap-highlight-color: transparent;
+}
+
+.power-btn::before {
+  content: '';
+  position: absolute;
+  inset: -3px;
+  border-radius: 50%;
+  padding: 3px;
+  background: linear-gradient(135deg, var(--text-muted), transparent, var(--text-muted));
+  -webkit-mask: linear-gradient(#fff 0 0) content-box, linear-gradient(#fff 0 0);
+  -webkit-mask-composite: xor;
+  mask-composite: exclude;
+  transition: background 0.5s;
+}
+
+.power-btn::after {
+  content: '';
+  position: absolute;
+  inset: -20px;
+  border-radius: 50%;
+  opacity: 0;
+  transition: opacity 0.5s;
+}
+
+.power-btn:hover { transform: scale(1.04); }
+.power-btn:active { transform: scale(0.96); }
+
+.power-btn.running::before {
+  background: linear-gradient(135deg, var(--accent-green), var(--accent-cyan), var(--accent-green));
+  animation: ring-spin 3s linear infinite;
+}
+
+.power-btn.running::after {
+  background: radial-gradient(circle, rgba(0, 255, 136, 0.12) 0%, transparent 70%);
+  opacity: 1;
+  animation: glow-pulse 2s ease-in-out infinite;
+}
+
+.power-btn.stopped::before {
+  background: linear-gradient(135deg, var(--accent-red), var(--accent-pink), var(--accent-red));
+}
+
+.power-btn.booting::before, .power-btn.deallocating::before {
+  background: conic-gradient(var(--accent-yellow), var(--accent-orange), transparent, var(--accent-yellow));
+  animation: ring-spin 1.5s linear infinite;
+}
+
+.power-btn.booting::after, .power-btn.deallocating::after {
+  background: radial-gradient(circle, rgba(255, 204, 0, 0.1) 0%, transparent 70%);
+  opacity: 1;
+  animation: glow-pulse 1s ease-in-out infinite;
+}
+
+.power-btn[disabled] {
+  cursor: not-allowed;
+  opacity: 0.7;
+  transform: none !important;
+}
+
+@keyframes ring-spin {
+  to { transform: rotate(360deg); /* applied to pseudo */ }
+}
+
+/* The ring-spin won't actually rotate the gradient visually because the pseudo is circular.
+   Let's use a different approach for the spinning ring. */
+.power-btn.booting::before, .power-btn.deallocating::before {
+  animation: border-dance 1.5s linear infinite;
+}
+
+.power-btn.running::before {
+  animation: border-dance 4s linear infinite;
+}
+
+@keyframes border-dance {
+  0% { filter: hue-rotate(0deg); }
+  100% { filter: hue-rotate(360deg); }
+}
+
+@keyframes glow-pulse {
+  0%, 100% { opacity: 0.6; transform: scale(1); }
+  50% { opacity: 1; transform: scale(1.05); }
+}
+
+.power-icon {
+  width: 48px;
+  height: 48px;
+  position: relative;
+  z-index: 1;
+}
+
+.power-icon svg {
+  width: 100%;
+  height: 100%;
+  stroke: var(--text-secondary);
+  stroke-width: 2.5;
+  fill: none;
+  transition: stroke 0.4s, filter 0.4s;
+}
+
+.power-btn.running .power-icon svg {
+  stroke: var(--accent-green);
+  filter: drop-shadow(0 0 8px rgba(0, 255, 136, 0.4));
+}
+
+.power-btn.stopped .power-icon svg {
+  stroke: var(--accent-red);
+}
+
+.power-btn.booting .power-icon svg, .power-btn.deallocating .power-icon svg {
+  stroke: var(--accent-yellow);
+  filter: drop-shadow(0 0 8px rgba(255, 204, 0, 0.4));
+}
+
+.power-label {
+  font-size: 0.8rem;
+  font-weight: 600;
+  letter-spacing: 0.1em;
+  text-transform: uppercase;
+  color: var(--text-secondary);
+  transition: color 0.3s;
+}
+
+/* ═══════════════════════════════════════════════════
+   INFO PANELS
+   ═══════════════════════════════════════════════════ */
+.info-row {
+  display: grid;
+  grid-template-columns: 1fr 1fr;
+  gap: 12px;
+  width: 100%;
+}
+
+.info-card {
+  padding: 16px;
+  display: flex;
+  flex-direction: column;
+  gap: 6px;
+}
+
+.info-card__label {
+  font-size: 0.65rem;
+  font-weight: 600;
+  text-transform: uppercase;
+  letter-spacing: 0.12em;
+  color: var(--text-secondary);
+}
+
+.info-card__value {
+  font-family: var(--mono);
+  font-size: 0.82rem;
+  font-weight: 500;
+  color: var(--text-primary);
+  word-break: break-all;
+  line-height: 1.4;
+}
+
+.info-card__value a {
+  color: var(--accent-cyan);
+  text-decoration: none;
+  transition: color 0.2s;
+}
+
+.info-card__value a:hover {
+  color: #fff;
+  text-decoration: underline;
+}
+
+.info-card__value.muted {
+  color: var(--text-muted);
+}
+
+/* ═══════════════════════════════════════════════════
+   WARP STATUS CARD
+   ═══════════════════════════════════════════════════ */
+.warp-card {
+  padding: 14px 20px;
+  display: flex;
+  align-items: center;
+  gap: 14px;
+  width: 100%;
+}
+
+.warp-icon {
+  width: 32px;
+  height: 32px;
+  border-radius: var(--radius-xs);
+  display: grid;
+  place-items: center;
+  font-size: 16px;
+  flex-shrink: 0;
+  background: linear-gradient(135deg, #ff8a3d, #ff6b1a);
+  transition: background 0.4s;
+}
+
+.warp-icon.connected {
+  background: linear-gradient(135deg, #ff8a3d, #ff6b1a);
+}
+
+.warp-icon.disconnected {
+  background: linear-gradient(135deg, #555, #333);
+}
+
+.warp-info {
+  flex: 1;
+}
+
+.warp-title {
+  font-size: 0.78rem;
+  font-weight: 600;
+}
+
+.warp-detail {
+  font-size: 0.65rem;
+  font-family: var(--mono);
+  color: var(--text-secondary);
+  font-weight: 500;
+}
+
+.warp-status-dot {
+  width: 8px;
+  height: 8px;
+  border-radius: 50%;
+  flex-shrink: 0;
+  background: var(--text-muted);
+  transition: background 0.4s, box-shadow 0.4s;
+}
+
+.warp-status-dot.connected {
+  background: var(--accent-green);
+  box-shadow: 0 0 8px rgba(0, 255, 136, 0.4);
+}
+
+.warp-status-dot.degraded {
+  background: var(--accent-yellow);
+  box-shadow: 0 0 8px rgba(255, 204, 0, 0.4);
+}
+
+.warp-status-dot.disconnected, .warp-status-dot.unreachable {
+  background: var(--accent-red);
+  box-shadow: 0 0 8px rgba(255, 59, 92, 0.3);
+}
+
+/* ═══════════════════════════════════════════════════
+   SERVICE CARDS
+   ═══════════════════════════════════════════════════ */
+.section-title {
+  font-size: 0.7rem;
+  font-weight: 700;
+  text-transform: uppercase;
+  letter-spacing: 0.15em;
+  color: var(--text-secondary);
+  width: 100%;
+  padding-left: 4px;
+}
+
+.services-grid {
+  display: grid;
+  grid-template-columns: repeat(2, 1fr);
+  gap: 10px;
+  width: 100%;
+}
+
+.service-card {
+  padding: 14px 16px;
+  display: flex;
+  align-items: center;
+  gap: 12px;
+  transition: border-color 0.3s, transform 0.15s;
+  cursor: pointer;
+  text-decoration: none;
+  color: inherit;
+}
+
+.service-card:hover {
+  border-color: rgba(255,255,255,0.12);
+  transform: translateY(-1px);
+}
+
+.service-card:active {
+  transform: translateY(0);
+}
+
+.service-card__icon {
+  width: 36px;
+  height: 36px;
+  border-radius: var(--radius-xs);
+  display: grid;
+  place-items: center;
+  font-size: 16px;
+  flex-shrink: 0;
+  position: relative;
+}
+
+.service-card__info {
+  flex: 1;
+  min-width: 0;
+}
+
+.service-card__name {
+  font-size: 0.78rem;
+  font-weight: 600;
+  white-space: nowrap;
+  overflow: hidden;
+  text-overflow: ellipsis;
+}
+
+.service-card__port {
+  font-size: 0.65rem;
+  font-family: var(--mono);
+  color: var(--text-secondary);
+  font-weight: 500;
+}
+
+.service-card__status {
+  width: 7px;
+  height: 7px;
+  border-radius: 50%;
+  flex-shrink: 0;
+  background: var(--text-muted);
+  transition: background 0.4s, box-shadow 0.4s;
+}
+
+.service-card__status.online {
+  background: var(--accent-green);
+  box-shadow: 0 0 8px rgba(0, 255, 136, 0.4);
+}
+
+/* Service icon colors */
+.svc-youtube  { background: linear-gradient(135deg, #ff0033, #cc0028); }
+.svc-cloud    { background: linear-gradient(135deg, #00b4d8, #0077b6); }
+.svc-music    { background: linear-gradient(135deg, #1db954, #148f3e); }
+.svc-manga    { background: linear-gradient(135deg, #ff6b9d, #c9184a); }
+.svc-walls    { background: linear-gradient(135deg, #b44aff, #7b2ff7); }
+.svc-store    { background: linear-gradient(135deg, #ff8a3d, #e06c20); }
+
+/* ═══════════════════════════════════════════════════
+   AUTO-SHUTDOWN TOGGLE
+   ═══════════════════════════════════════════════════ */
+.shutdown-card {
+  padding: 18px 20px;
+  display: flex;
+  align-items: center;
+  gap: 16px;
+  width: 100%;
+}
+
+.shutdown-info {
+  flex: 1;
+}
+
+.shutdown-title {
+  font-size: 0.82rem;
+  font-weight: 600;
+  margin-bottom: 3px;
+}
+
+.shutdown-sub {
+  font-size: 0.7rem;
+  color: var(--text-secondary);
+  font-family: var(--mono);
+}
+
+.shutdown-sub .countdown {
+  color: var(--accent-yellow);
+  font-weight: 600;
+}
+
+.toggle {
+  position: relative;
+  width: 48px;
+  height: 28px;
+  flex-shrink: 0;
+}
+
+.toggle input {
+  opacity: 0;
+  width: 0;
+  height: 0;
+  position: absolute;
+}
+
+.toggle__track {
+  position: absolute;
+  inset: 0;
+  border-radius: 14px;
+  background: rgba(255, 255, 255, 0.08);
+  border: 1px solid rgba(255, 255, 255, 0.1);
+  cursor: pointer;
+  transition: background 0.3s, border-color 0.3s;
+}
+
+.toggle__track::after {
+  content: '';
+  position: absolute;
+  top: 3px;
+  left: 3px;
+  width: 20px;
+  height: 20px;
+  border-radius: 50%;
+  background: var(--text-secondary);
+  transition: transform 0.3s cubic-bezier(0.4, 0, 0.2, 1), background 0.3s;
+}
+
+.toggle input:checked + .toggle__track {
+  background: rgba(0, 229, 255, 0.15);
+  border-color: rgba(0, 229, 255, 0.3);
+}
+
+.toggle input:checked + .toggle__track::after {
+  transform: translateX(20px);
+  background: var(--accent-cyan);
+  box-shadow: 0 0 8px rgba(0, 229, 255, 0.4);
+}
+
+/* ═══════════════════════════════════════════════════
+   UPTIME & FOOTER
+   ═══════════════════════════════════════════════════ */
+.footer {
+  text-align: center;
+  padding: 8px 0;
+}
+
+.footer__text {
+  font-size: 0.65rem;
+  color: var(--text-muted);
+  font-weight: 500;
+}
+
+.footer__text span {
+  color: var(--text-secondary);
+}
+
+/* ═══════════════════════════════════════════════════
+   LOADING SPINNER (for button)
+   ═══════════════════════════════════════════════════ */
+.spinner {
+  display: none;
+  width: 28px;
+  height: 28px;
+  border: 3px solid rgba(255,255,255,0.1);
+  border-top-color: var(--accent-cyan);
+  border-radius: 50%;
+  animation: spin 0.8s linear infinite;
+  position: absolute;
+  z-index: 2;
+}
+
+.power-btn.loading .spinner { display: block; }
+.power-btn.loading .power-icon { opacity: 0.2; }
+
+@keyframes spin {
+  to { transform: rotate(360deg); }
+}
+
+/* ═══════════════════════════════════════════════════
+   TOAST NOTIFICATION
+   ═══════════════════════════════════════════════════ */
+.toast {
+  position: fixed;
+  bottom: 30px;
+  left: 50%;
+  transform: translateX(-50%) translateY(100px);
+  padding: 12px 24px;
+  border-radius: var(--radius-sm);
+  font-size: 0.8rem;
+  font-weight: 600;
+  z-index: 9999;
+  opacity: 0;
+  transition: transform 0.4s cubic-bezier(0.4, 0, 0.2, 1), opacity 0.4s;
+  backdrop-filter: blur(20px);
+  -webkit-backdrop-filter: blur(20px);
+  border: 1px solid var(--glass-border);
+  pointer-events: none;
+  white-space: nowrap;
+}
+
+.toast.show {
+  transform: translateX(-50%) translateY(0);
+  opacity: 1;
+}
+
+.toast.success {
+  background: rgba(0, 255, 136, 0.1);
+  color: var(--accent-green);
+  border-color: rgba(0, 255, 136, 0.2);
+}
+
+.toast.error {
+  background: rgba(255, 59, 92, 0.1);
+  color: var(--accent-red);
+  border-color: rgba(255, 59, 92, 0.2);
+}
+
+.toast.info {
+  background: rgba(0, 229, 255, 0.1);
+  color: var(--accent-cyan);
+  border-color: rgba(0, 229, 255, 0.2);
+}
+
+/* ═══════════════════════════════════════════════════
+   RESPONSIVE
+   ═══════════════════════════════════════════════════ */
+@media (max-width: 480px) {
+  .app { padding: 12px 10px 30px; gap: 20px; }
+  .header__title { font-size: 1.25rem; }
+  .power-btn { width: 120px; height: 120px; }
+  .power-icon { width: 40px; height: 40px; }
+  .services-grid { gap: 8px; }
+  .service-card { padding: 12px; gap: 10px; }
+  .service-card__icon { width: 30px; height: 30px; font-size: 14px; }
+  .service-card__name { font-size: 0.72rem; }
+  .info-row { gap: 8px; }
+}
+
+/* Apple Watch / very small screens */
+@media (max-width: 200px) {
+  html { font-size: 10px; }
+  .app { padding: 6px 4px 16px; gap: 10px; }
+  .header__logo { gap: 6px; }
+  .header__icon { width: 20px; height: 20px; font-size: 11px; border-radius: 5px; }
+  .header__title { font-size: 1rem; }
+  .header__sub { font-size: 0.6rem; letter-spacing: 0.08em; }
+  .power-btn { width: 72px; height: 72px; }
+  .power-btn::before { inset: -2px; padding: 2px; }
+  .power-icon { width: 26px; height: 26px; }
+  .status-bar { padding: 8px 10px; font-size: 0.7rem; gap: 6px; }
+  .status-dot { width: 6px; height: 6px; }
+  .info-row { grid-template-columns: 1fr; gap: 6px; }
+  .info-card { padding: 10px; gap: 3px; }
+  .info-card__label { font-size: 0.55rem; }
+  .info-card__value { font-size: 0.65rem; }
+  .services-grid { grid-template-columns: 1fr; gap: 6px; }
+  .service-card { padding: 10px; gap: 8px; }
+  .service-card__icon { width: 24px; height: 24px; font-size: 12px; border-radius: 4px; }
+  .service-card__name { font-size: 0.65rem; }
+  .service-card__port { font-size: 0.55rem; }
+  .shutdown-card { padding: 12px; gap: 10px; }
+  .toggle { width: 38px; height: 22px; }
+  .toggle__track::after { width: 16px; height: 16px; top: 2px; left: 2px; }
+  .toggle input:checked + .toggle__track::after { transform: translateX(16px); }
+  .section-title { font-size: 0.6rem; }
+  .power-label { font-size: 0.65rem; }
+  .glass { border-radius: 10px; }
+}
+
+/* ═══════════════════════════════════════════════════
+   SUBTLE ANIMATIONS
+   ═══════════════════════════════════════════════════ */
+.fade-in {
+  opacity: 0;
+  transform: translateY(12px);
+  animation: fadeIn 0.5s ease-out forwards;
+}
+
+@keyframes fadeIn {
+  to { opacity: 1; transform: translateY(0); }
+}
+
+.fade-in:nth-child(1) { animation-delay: 0.05s; }
+.fade-in:nth-child(2) { animation-delay: 0.1s; }
+.fade-in:nth-child(3) { animation-delay: 0.15s; }
+.fade-in:nth-child(4) { animation-delay: 0.2s; }
+.fade-in:nth-child(5) { animation-delay: 0.25s; }
+.fade-in:nth-child(6) { animation-delay: 0.3s; }
+.fade-in:nth-child(7) { animation-delay: 0.35s; }
+.fade-in:nth-child(8) { animation-delay: 0.4s; }
+.fade-in:nth-child(9) { animation-delay: 0.45s; }
+</style>
+</head>
+<body>
+
+<!-- Animated Background -->
+<div class="bg-canvas">
+  <div class="bg-grid"></div>
+  <div class="bg-orb"></div>
+  <div class="bg-orb"></div>
+</div>
+
+<!-- App -->
+<div class="app">
+
+  <!-- Header -->
+  <header class="header fade-in">
+    <div class="header__logo">
+      <div class="header__icon">☁</div>
+      <h1 class="header__title">PSP Cloud</h1>
+    </div>
+    <p class="header__sub">Streaming Control Panel</p>
+  </header>
+
+  <!-- Status Bar -->
+  <!-- Status Grid -->
+  <div class="info-row fade-in">
+    <!-- Oracle Primary -->
+    <div class="glass info-card">
+      <span class="info-card__label" style="color:var(--accent-green)">Primary (Oracle ARM)</span>
+      <span class="info-card__value" id="oracleStatusDisp">Checking…</span>
+      <span class="info-card__value" style="font-size: 0.65rem">
+        <a href="http://upbackup67dev.duckdns.org" target="_blank">upbackup67dev.duckdns.org</a>
+      </span>
+    </div>
+
+    <!-- Azure Fallback -->
+    <div class="glass info-card">
+      <span class="info-card__label" style="color:var(--accent-yellow)">Fallback (Azure x86)</span>
+      <span class="info-card__value" id="statusLabel">Connecting…</span>
+      <span class="info-card__value" style="font-size: 0.65rem" id="ipDisplay">—</span>
+    </div>
+  </div>
+
+  <!-- Azure Power Control -->
+  <div class="glass warp-card fade-in" style="justify-content: space-between">
+    <div style="display:flex; align-items:center; gap:14px;">
+      <button class="power-btn" id="powerBtn" title="Toggle Azure Fallback" style="width:48px; height:48px; min-height:48px;">
+        <div class="spinner" style="width:16px;height:16px;"></div>
+        <div class="power-icon" style="width:20px;height:20px;">
+          <svg viewBox="0 0 24 24"><path d="M12 2v10" stroke-linecap="round"/><path d="M18.36 6.64A9 9 0 1 1 5.64 6.64" stroke-linecap="round"/></svg>
+        </div>
+      </button>
+      <div class="warp-info">
+        <div class="warp-title">Azure Power</div>
+        <div class="warp-detail" id="powerLabel">Loading…</div>
+      </div>
+    </div>
+    <div class="status-dot" id="statusDot"></div>
+  </div>
+
+  <!-- WARP Proxy Status -->
+  <div class="glass warp-card fade-in" id="warpCard">
+    <div class="warp-icon" id="warpIcon">🔶</div>
+    <div class="warp-info">
+      <div class="warp-title">Cloudflare WARP</div>
+      <div class="warp-detail" id="warpDetail">Checking…</div>
+    </div>
+    <div class="warp-status-dot" id="warpDot"></div>
+  </div>
+
+  <!-- Services -->
+  <span class="section-title fade-in">Services</span>
+
+  <div class="services-grid fade-in" id="servicesGrid">
+    <a class="glass service-card" data-port="8081" href="#" target="_blank" rel="noopener">
+      <div class="service-card__icon svc-youtube">▶</div>
+      <div class="service-card__info">
+        <div class="service-card__name">YouTubeHQ</div>
+        <div class="service-card__port">:8081</div>
+      </div>
+      <div class="service-card__status" id="svc-8081"></div>
+    </a>
+    <a class="glass service-card" data-port="8082" href="#" target="_blank" rel="noopener">
+      <div class="service-card__icon svc-cloud">☁</div>
+      <div class="service-card__info">
+        <div class="service-card__name">CloudMedia</div>
+        <div class="service-card__port">:8082</div>
+      </div>
+      <div class="service-card__status" id="svc-8082"></div>
+    </a>
+    <a class="glass service-card" data-port="8083" href="#" target="_blank" rel="noopener">
+      <div class="service-card__icon svc-music">♫</div>
+      <div class="service-card__info">
+        <div class="service-card__name">SpotiFLAC</div>
+        <div class="service-card__port">:8083</div>
+      </div>
+      <div class="service-card__status" id="svc-8083"></div>
+    </a>
+    <a class="glass service-card" data-port="8084" href="#" target="_blank" rel="noopener">
+      <div class="service-card__icon svc-manga">本</div>
+      <div class="service-card__info">
+        <div class="service-card__name">Manga</div>
+        <div class="service-card__port">:8084</div>
+      </div>
+      <div class="service-card__status" id="svc-8084"></div>
+    </a>
+    <a class="glass service-card" data-port="8085" href="#" target="_blank" rel="noopener">
+      <div class="service-card__icon svc-walls">✦</div>
+      <div class="service-card__info">
+        <div class="service-card__name">Wallpapers</div>
+        <div class="service-card__port">:8085</div>
+      </div>
+      <div class="service-card__status" id="svc-8085"></div>
+    </a>
+    <a class="glass service-card" data-port="8087" href="#" target="_blank" rel="noopener">
+      <div class="service-card__icon svc-store">⬡</div>
+      <div class="service-card__info">
+        <div class="service-card__name">PSP Store</div>
+        <div class="service-card__port">:8087</div>
+      </div>
+      <div class="service-card__status" id="svc-8087"></div>
+    </a>
+  </div>
+
+  <!-- Auto-Shutdown -->
+  <div class="glass shutdown-card fade-in">
+    <div class="shutdown-info">
+      <div class="shutdown-title">Auto-Shutdown</div>
+      <div class="shutdown-sub" id="shutdownSub">Inactive</div>
+    </div>
+    <label class="toggle">
+      <input type="checkbox" id="autoShutdown" checked>
+      <div class="toggle__track"></div>
+    </label>
+  </div>
+
+  <!-- Footer -->
+  <footer class="footer fade-in">
+    <p class="footer__text">
+      Uptime: <span id="uptimeDisplay">—</span>&ensp;·&ensp;Last poll: <span id="lastPoll">never</span>
+    </p>
+  </footer>
+
+</div>
+
+<!-- Toast -->
+<div class="toast" id="toast"></div>
+
+<script>
+/* ═══════════════════════════════════════════════════════════
+   CONFIGURATION — edit these to match your deployment
+   ═══════════════════════════════════════════════════════════ */
+const CONFIG = {
+  API_BASE: '',              // e.g. 'https://myserver.com' — leave empty if same-origin
+  API_KEY:  'psp-rei-wake-2026',      // ?key= parameter
+  HOSTNAME: 'upbackup67dev.duckdns.org',
+  POLL_MS:  10000,           // poll interval in ms
+  AUTO_SHUTDOWN_MINUTES: 30, // default auto-shutdown timer
+};
+
+/* ═══════════════════════════════════════════════════════════
+   STATE
+   ═══════════════════════════════════════════════════════════ */
+const state = {
+  vmStatus: 'unknown',
+  oracleStatus: 'unknown',
+  ip: null,
+  bootedAt: localStorage.getItem('vmBootedAt') ? parseInt(localStorage.getItem('vmBootedAt')) : null,
+  actionInFlight: false,
+  autoShutdown: localStorage.getItem('autoShutdown') !== null ? localStorage.getItem('autoShutdown') === 'true' : true,
+  shutdownTimer: null,
+  shutdownDeadline: null,
+  services: {},
+  warp: null,
+  socks5: null,
+};
+
+/* ═══════════════════════════════════════════════════════════
+   DOM REFS
+   ═══════════════════════════════════════════════════════════ */
+const $ = (s) => document.querySelector(s);
+const powerBtn     = $('#powerBtn');
+const powerLabel   = $('#powerLabel');
+const statusDot    = $('#statusDot');
+const statusLabel  = $('#statusLabel');
+const ipDisplay    = $('#ipDisplay');
+const oracleStatusDisp = $('#oracleStatusDisp');
+const uptimeDisp   = $('#uptimeDisplay');
+const lastPollDisp = $('#lastPoll');
+const shutdownSub  = $('#shutdownSub');
+const autoShutCb   = $('#autoShutdown');
+const toastEl      = $('#toast');
+const warpIcon     = $('#warpIcon');
+const warpDetail   = $('#warpDetail');
+const warpDot      = $('#warpDot');
+
+/* ═══════════════════════════════════════════════════════════
+   API HELPERS
+   ═══════════════════════════════════════════════════════════ */
+function apiUrl(endpoint) {
+  return `${CONFIG.API_BASE}/api/${endpoint}?key=${encodeURIComponent(CONFIG.API_KEY)}`;
+}
+
+async function apiFetch(endpoint) {
+  const res = await fetch(apiUrl(endpoint), { cache: 'no-store' });
+  if (!res.ok) throw new Error(`HTTP ${res.status}`);
+  return res.json();
+}
+
+/* ═══════════════════════════════════════════════════════════
+   TOAST
+   ═══════════════════════════════════════════════════════════ */
+let toastTimeout;
+function toast(msg, type = 'info') {
+  clearTimeout(toastTimeout);
+  toastEl.textContent = msg;
+  toastEl.className = 'toast ' + type;
+  requestAnimationFrame(() => toastEl.classList.add('show'));
+  toastTimeout = setTimeout(() => toastEl.classList.remove('show'), 3000);
+}
+
+/* ═══════════════════════════════════════════════════════════
+   RENDER
+   ═══════════════════════════════════════════════════════════ */
+function render() {
+  const s = state.vmStatus;
+  const isRunning  = s === 'running';
+  const isStopped  = s === 'stopped' || s === 'deallocated';
+  const isBooting  = s === 'booting' || s === 'starting';
+  const isDealloc  = s === 'deallocating' || s === 'stopping';
+  const isTransit  = isBooting || isDealloc;
+
+  // Oracle status
+  const isOracleUp = state.oracleStatus === 'online';
+  oracleStatusDisp.textContent = isOracleUp ? '● Online (12GB RAM)' : '○ Offline';
+  oracleStatusDisp.style.color = isOracleUp ? 'var(--accent-green)' : 'var(--accent-red)';
+
+  // Status dot & label for Azure
+  statusDot.className = 'status-dot ' +
+    (isRunning ? 'running' : isStopped ? 'stopped' : isTransit ? 'booting' : '');
+
+  const prettyStatus = {
+    running: '● Running',
+    stopped: '○ Stopped',
+    deallocated: '○ Deallocated',
+    booting: '◌ Starting…',
+    starting: '◌ Starting…',
+    deallocating: '◌ Shutting Down…',
+    stopping: '◌ Shutting Down…',
+    unknown: '? Unknown',
+  };
+  statusLabel.textContent = prettyStatus[s] || s;
+  statusLabel.className = 'status-card__value ' +
+    (isRunning ? 'running' : isStopped ? 'stopped' : isTransit ? 'booting' : '');
+  statusLabel.style.color = isRunning ? 'var(--accent-cyan)' : isStopped ? 'var(--accent-red)' : 'var(--accent-yellow)';
+
+  // Power button
+  powerBtn.className = 'power-btn' +
+    (isRunning ? ' running' : isStopped ? ' stopped' : isTransit ? ' booting' : '') +
+    (state.actionInFlight ? ' loading' : '');
+  powerBtn.disabled = state.actionInFlight || isTransit;
+
+  powerLabel.textContent =
+    state.actionInFlight ? 'Working…' :
+    isRunning ? 'Tap to Stop' :
+    isStopped ? 'Tap to Start' :
+    isBooting ? 'Starting…' :
+    isDealloc ? 'Stopping…' : '…';
+
+  // IP
+  if (state.ip && isRunning) {
+    ipDisplay.innerHTML = `<a href="http://${state.ip}" target="_blank" rel="noopener">${state.ip}</a>`;
+  } else {
+    ipDisplay.textContent = isTransit ? '…' : '—';
+  }
+
+  // Service cards: update links & status dots based on Oracle OR Azure
+  document.querySelectorAll('.service-card').forEach(card => {
+    const port = card.dataset.port;
+    if (isOracleUp) {
+      card.href = `http://${CONFIG.HOSTNAME}:${port}`;
+    } else if (isRunning && state.ip) {
+      card.href = `http://${state.ip}:${port}`;
+    } else {
+      card.href = '#';
+    }
+    const dot = card.querySelector('.service-card__status');
+    if (isOracleUp || (isRunning && state.ip)) {
+      dot.classList.add('online');
+    } else {
+      dot.classList.remove('online');
+    }
+  });
+
+  // Uptime
+  if (state.bootedAt && isRunning) {
+    const diff = Math.floor((Date.now() - state.bootedAt) / 1000);
+    const h = Math.floor(diff / 3600);
+    const m = Math.floor((diff % 3600) / 60);
+    const sec = diff % 60;
+    uptimeDisp.textContent = (h ? h + 'h ' : '') + m + 'm ' + sec + 's';
+  } else {
+    uptimeDisp.textContent = '—';
+  }
+
+  // WARP status
+  const w = state.warp;
+  if ((isOracleUp || isRunning) && w) {
+    warpDot.className = 'warp-status-dot ' + w;
+    warpIcon.className = 'warp-icon ' + (w === 'connected' ? 'connected' : 'disconnected');
+    const labels = {
+      connected: 'Connected · SOCKS5 ✓',
+      degraded: 'Degraded · Network unhealthy',
+      disconnected: 'Disconnected',
+      unreachable: 'Health server unreachable',
+    };
+    warpDetail.textContent = labels[w] || w;
+  } else {
+    warpDot.className = 'warp-status-dot';
+    warpIcon.className = 'warp-icon disconnected';
+    warpDetail.textContent = (isOracleUp || isRunning) ? 'Checking…' : 'Offline';
+  }
+}
+
+/* ═══════════════════════════════════════════════════════════
+   AUTO-SHUTDOWN TIMER
+   ═══════════════════════════════════════════════════════════ */
+autoShutCb.checked = state.autoShutdown;
+
+function resetShutdownTimer() {
+  clearTimeout(state.shutdownTimer);
+  state.shutdownTimer = null;
+  state.shutdownDeadline = null;
+  shutdownSub.textContent = 'Disabled (24/7 Mode)';
+}
+
+function updateShutdownDisplay() {
+  shutdownSub.textContent = 'Disabled (24/7 Mode)';
+}
+
+autoShutCb.addEventListener('change', () => {
+  state.autoShutdown = autoShutCb.checked;
+  localStorage.setItem('autoShutdown', state.autoShutdown);
+  resetShutdownTimer();
+});
+
+/* ═══════════════════════════════════════════════════════════
+   ACTIONS
+   ═══════════════════════════════════════════════════════════ */
+async function doAction(action) {
+  if (state.actionInFlight) return;
+  state.actionInFlight = true;
+  render();
+
+  try {
+    const data = await apiFetch(action);
+    toast(action === 'wake' ? 'Starting VM…' : 'Stopping VM…', 'success');
+
+    // Optimistically update
+    if (action === 'wake') {
+      state.vmStatus = 'booting';
+    } else {
+      state.vmStatus = 'deallocating';
+      state.bootedAt = null;
+    }
+  } catch (err) {
+    toast('Action failed: ' + err.message, 'error');
+  } finally {
+    state.actionInFlight = false;
+    render();
+    // Poll quickly after action
+    setTimeout(pollStatus, 3000);
+  }
+}
+
+powerBtn.addEventListener('click', () => {
+  const s = state.vmStatus;
+  if (s === 'running') {
+    doAction('sleep');
+  } else if (s === 'stopped' || s === 'deallocated' || s === 'unknown') {
+    doAction('wake');
+  }
+});
+
+/* ═══════════════════════════════════════════════════════════
+   POLLING
+   ═══════════════════════════════════════════════════════════ */
+async function pollStatus() {
+  try {
+    const data = await apiFetch('status');
+    const prev = state.vmStatus;
+
+    // Normalize status from various API shapes
+    state.vmStatus = (data.azure?.powerState || data.azure?.vmStatus || data.azure?.status || data.azure?.state || 'unknown').toLowerCase().replace(/\s+/g, '');
+    state.oracleStatus = data.oracle?.status || 'offline';
+    state.ip = data.azure?.ip || data.azure?.publicIp || data.azure?.ipAddress || null;
+    state.warp = data.oracle?.warp || data.azure?.warp || null;
+    state.socks5 = data.oracle?.socks5 || data.azure?.socks5 || null;
+
+    // Track boot time
+    if (state.vmStatus === 'running' && prev !== 'running') {
+      if (!state.bootedAt) {
+        state.bootedAt = Date.now();
+        localStorage.setItem('vmBootedAt', state.bootedAt.toString());
+      }
+      resetShutdownTimer();
+    } else if (state.vmStatus !== 'running') {
+      state.bootedAt = null;
+      localStorage.removeItem('vmBootedAt');
+      clearTimeout(state.shutdownTimer);
+      state.shutdownDeadline = null;
+    }
+
+    lastPollDisp.textContent = new Date().toLocaleTimeString();
+  } catch (err) {
+    // Don't overwrite status on network error
+    lastPollDisp.textContent = 'error';
+  }
+  render();
+}
+
+/* ═══════════════════════════════════════════════════════════
+   TICKERS
+   ═══════════════════════════════════════════════════════════ */
+// Poll status every POLL_MS
+setInterval(pollStatus, CONFIG.POLL_MS);
+
+// Update uptime & shutdown countdown every second
+setInterval(() => {
+  render();
+  updateShutdownDisplay();
+}, 1000);
+
+// Initial poll
+pollStatus();
+</script>
+</body>
+</html>

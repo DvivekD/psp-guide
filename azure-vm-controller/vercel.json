@@ -1,0 +1,8 @@
+{
+  "version": 2,
+  "routes": [
+    { "src": "/api/wake", "dest": "/api/wake.js" },
+    { "src": "/api/sleep", "dest": "/api/sleep.js" },
+    { "src": "/api/status", "dest": "/api/status.js" }
+  ]
+}
